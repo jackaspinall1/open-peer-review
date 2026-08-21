@@ -1,0 +1,186 @@
+:root {
+  --ink: #1e2126;
+  --muted: #6b7280;
+  --paper: #f5f4f1;
+  --card: #ffffff;
+  --line: #e2e0da;
+  --accent: #1a5fb4;
+  --accent-dark: #144a8f;
+  --highlight: rgba(255, 205, 60, 0.35);
+  --highlight-active: rgba(255, 160, 30, 0.5);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.app { display: flex; flex-direction: column; height: 100vh; }
+
+/* ---------- top bar ---------- */
+.topbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 20px; height: 52px; flex: none;
+  background: var(--card); border-bottom: 1px solid var(--line);
+}
+.brand { font-weight: 700; font-size: 17px; color: var(--ink); text-decoration: none; }
+.topbar nav { display: flex; align-items: center; gap: 18px; }
+.navlink { color: var(--accent); text-decoration: none; font-size: 14px; }
+.navlink:hover { text-decoration: underline; }
+.userbox { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.username { font-weight: 600; }
+
+/* ---------- generic ---------- */
+.page { max-width: 900px; margin: 0 auto; padding: 32px 20px; overflow-y: auto; width: 100%; }
+.page.narrow { max-width: 560px; }
+h1 { font-size: 24px; margin: 0 0 16px; }
+h2 { font-size: 16px; margin: 0; }
+.muted { color: var(--muted); }
+.error { color: #b3261e; font-size: 14px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 20px; }
+.linkbtn {
+  background: none; border: none; color: var(--accent); cursor: pointer;
+  font-size: 13px; padding: 2px 4px; text-decoration: none;
+}
+.linkbtn:hover { text-decoration: underline; }
+.linkbtn:disabled { color: var(--muted); cursor: default; text-decoration: none; }
+.primary {
+  background: var(--accent); color: #fff; border: none; border-radius: 6px;
+  padding: 9px 18px; font-size: 14px; cursor: pointer; display: inline-block; text-decoration: none;
+}
+.primary:hover { background: var(--accent-dark); }
+.primary:disabled { background: var(--muted); cursor: default; }
+.primary.small { padding: 6px 12px; font-size: 13px; }
+
+/* ---------- forms ---------- */
+.form { display: flex; flex-direction: column; gap: 14px; }
+.form label { display: flex; flex-direction: column; gap: 5px; font-size: 14px; font-weight: 600; }
+.form input, .form textarea, .replyform textarea, .draft textarea {
+  font: inherit; font-weight: 400; padding: 8px 10px;
+  border: 1px solid var(--line); border-radius: 6px; background: #fff;
+}
+.form fieldset { border: 1px solid var(--line); border-radius: 6px; padding: 12px; }
+.form legend { font-size: 13px; font-weight: 600; padding: 0 6px; }
+.authorrow { display: flex; gap: 8px; margin-bottom: 8px; }
+.authorrow input { flex: 1; }
+.formnote { font-size: 12.5px; color: var(--muted); }
+.formrow { display: flex; gap: 10px; align-items: center; }
+
+/* ---------- index ---------- */
+.doclist { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+.doccard { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; }
+.doctitle { font-size: 17px; font-weight: 600; color: var(--ink); text-decoration: none; }
+.doctitle:hover { color: var(--accent); }
+.docmeta { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 6px; font-size: 13px; color: var(--muted); }
+.count { font-weight: 600; color: var(--accent); }
+
+/* ---------- viewer layout ---------- */
+.viewer { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.viewerhead {
+  padding: 12px 20px; background: var(--card); border-bottom: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: center; gap: 16px;
+}
+.revisionbtn { cursor: pointer; white-space: nowrap; }
+.viewerhead h1 { font-size: 17px; margin: 0; }
+.viewerbody { display: flex; flex: 1; min-height: 0; }
+.pdfcolumn {
+  flex: 1; overflow-y: auto; padding: 24px 16px;
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+}
+.loadingpdf { margin-top: 40px; }
+
+/* ---------- pdf page ---------- */
+.pdfpage {
+  position: relative; background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15); flex: none;
+}
+.pdfpage canvas { position: absolute; top: 0; left: 0; z-index: 0; }
+.highlightLayer { position: absolute; inset: 0; pointer-events: none; }
+.hl { position: absolute; z-index: 1; background: var(--highlight); border-radius: 1px; }
+.hl.active { background: var(--highlight-active); }
+.hl-pin {
+  position: absolute; top: 8px; right: 8px; z-index: 3; pointer-events: auto;
+  background: var(--card); border: 1px solid var(--line); border-radius: 50%;
+  width: 32px; height: 32px; cursor: pointer; font-size: 14px;
+}
+.hl-pin.active { border-color: var(--accent); }
+
+/* pdf.js text layer (minimal rules from pdf_viewer.css; --scale-factor is set inline) */
+.textLayer {
+  position: absolute; inset: 0; z-index: 2;
+  overflow: clip; line-height: 1;
+  text-align: initial; text-size-adjust: none; forced-color-adjust: none;
+  transform-origin: 0 0; caret-color: CanvasText;
+}
+.textLayer :is(span, br) {
+  color: transparent; position: absolute; white-space: pre;
+  cursor: text; transform-origin: 0% 0%;
+}
+.textLayer ::selection { background: rgba(26, 95, 180, 0.30); }
+
+/* ---------- selection popover ---------- */
+.selpopover {
+  position: fixed; z-index: 50;
+  background: var(--ink); color: #fff; border: none; border-radius: 6px;
+  padding: 8px 14px; font-size: 13px; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.selpopover:hover { background: #000; }
+
+/* ---------- sidebar ---------- */
+.sidebar {
+  width: 400px; flex: none; overflow-y: auto;
+  background: var(--card); border-left: 1px solid var(--line); padding: 16px;
+}
+.sidebarhead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.sidebarhint { font-size: 13.5px; }
+.commentcard {
+  border: 1px solid var(--line); border-radius: 8px; padding: 12px;
+  margin-bottom: 12px; background: #fff; transition: border-color 0.15s, box-shadow 0.15s;
+}
+.commentcard.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(26, 95, 180, 0.15); }
+.commentcard.draft { border-color: var(--accent); display: flex; flex-direction: column; gap: 10px; }
+.quote {
+  margin: 0 0 10px; padding: 6px 10px; font-size: 12.5px; color: #574f3e;
+  background: var(--highlight); border-left: 3px solid #d9a514; border-radius: 3px;
+  cursor: pointer;
+}
+.quote:hover { background: var(--highlight-active); }
+.pageref { margin-left: 8px; color: var(--muted); font-size: 11.5px; white-space: nowrap; }
+.commentmeta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.alias { font-weight: 700; font-size: 13.5px; }
+.time { font-size: 12px; }
+.commentbody { font-size: 14px; margin: 8px 0; white-space: pre-wrap; }
+.commentactions { display: flex; align-items: center; gap: 12px; }
+.reply { border-top: 1px solid var(--line); margin-top: 10px; padding: 10px 0 0 14px; }
+.replyform { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.replyform textarea, .draft textarea { width: 100%; resize: vertical; }
+
+/* ---------- votes & badges ---------- */
+.votes { display: flex; gap: 6px; }
+.votebtn {
+  background: none; border: 1px solid var(--line); border-radius: 5px;
+  font-size: 12px; padding: 3px 8px; cursor: pointer; color: var(--muted);
+}
+.votebtn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.votebtn.cast { border-color: var(--accent); color: var(--accent); background: rgba(26, 95, 180, 0.08); }
+.votebtn:disabled { cursor: default; opacity: 0.55; }
+.coibadge {
+  font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; white-space: nowrap;
+}
+.coi-author { background: #fde8e6; color: #a12b22; }
+.coi-coauthor { background: #fdf3d7; color: #8a6d0b; }
+.coi-colleague { background: #fdeede; color: #9a5b1f; }
+.coi-none { background: #e5f3e8; color: #226b36; }
+.coi-grey { background: #ececec; color: #666; }
+
+/* ---------- toast ---------- */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 60;
+  background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 13.5px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
