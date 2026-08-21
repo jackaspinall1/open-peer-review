@@ -37,10 +37,16 @@ anchors, pseudonyms, COI badges, vote tallies, resolution states
 
 ## Trust & identity
 
-- [ ] Expertise badge: same OpenAlex lookup → "publishes in this field" for
-      pseudonymous reviewers (topic overlap between reviewer's works and paper)
-- [ ] Weight/flag by publication record (fresh zero-work ORCIDs are cheap to
-      create; a "no publication record" badge is the honest Sybil defence)
+- [x] Expertise badge: topic/subfield/field-tiered match between reviewer's
+      OpenAlex topic profile and the paper's topics (DOI lookup or /text/topics
+      title classification); bucketed counts + years-active only — career
+      titles and institutions deliberately NOT displayed (reimports hierarchy,
+      shrinks the anonymity set)
+- [x] De-fingerprint COI details: bucketed counts, no author names
+      ("Co-authored with one of the authors (20+ shared works)")
+- [x] "No publication record" badge for zero-work ORCIDs (the honest Sybil
+      defence); algorithmic vote-weighting by expertise deliberately deferred —
+      display, don't weight, until real behaviour is observed
 - [ ] COI recency policy: colour active vs. historical co-authorship
       (funder convention: within 48 months; year already captured)
 - [ ] DOI → Crossref/OpenAlex metadata autofill on upload (closes the

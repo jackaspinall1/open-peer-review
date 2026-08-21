@@ -28,6 +28,7 @@ class Document(Base):
     doi: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
     pdf_filename: Mapped[str] = mapped_column(String(200))
     version: Mapped[int] = mapped_column(Integer, default=1)
+    topics_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # OpenAlex topics
     uploaded_by: Mapped[Optional[int]] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
@@ -69,6 +70,9 @@ class ReviewerAlias(Base):
     # author | coauthor | none | unverifiable | pending
     coi_status: Mapped[str] = mapped_column(String(20), default="pending")
     coi_detail: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
+    # topic | subfield | field | none | no_record | pending
+    expertise_level: Mapped[str] = mapped_column(String(20), default="pending")
+    expertise_detail: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
     coi_checked_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
 

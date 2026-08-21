@@ -6,6 +6,8 @@ from fastapi.responses import FileResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+import json as _json
+
 from .. import coi, config
 from ..auth import require_user
 from ..db import get_db
@@ -65,6 +67,9 @@ async def upload_document(
         if orcid_raw and orcid is None:
             raise HTTPException(status_code=422, detail=f"Invalid ORCID for author '{name}'")
         db.add(DocumentAuthor(document_id=doc.id, name=name, orcid=orcid, position=i))
+    topics = coi.classify_document(doc)  # best-effort; retried lazily if it fails
+    if topics is not None:
+        doc.topics_json = _json.dumps(topics)
     db.commit()
     return {"id": doc.id}
 

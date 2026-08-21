@@ -178,6 +178,8 @@ h2 { font-size: 16px; margin: 0; }
 .coi-colleague { background: #fdeede; color: #9a5b1f; }
 .coi-none { background: #e5f3e8; color: #226b36; }
 .coi-grey { background: #ececec; color: #666; }
+.exp-strong { background: #e2ecf9; color: #17538f; }
+.exp-mid { background: #eaf0f6; color: #4a6b8a; }
 
 /* ---------- toast ---------- */
 .toast {

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useMe } from '../auth'
-import CoiBadge from './CoiBadge'
+import CoiBadge, { ExpertiseBadge } from './CoiBadge'
 import VoteButtons from './VoteButtons'
 
 function timeAgo(iso) {
@@ -23,6 +23,7 @@ function CommentCard({ comment, onVote, canVote, children }) {
           {comment.alias}
         </span>
         {comment.coi?.status !== 'author' && <CoiBadge coi={comment.coi} />}
+        {comment.coi?.status !== 'author' && <ExpertiseBadge expertise={comment.expertise} />}
         <span className="muted time">{timeAgo(comment.created_at)}</span>
       </div>
       <p className="commentbody">{comment.body}</p>

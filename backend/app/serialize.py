@@ -56,6 +56,10 @@ def comment_tree(db: Session, doc: Document, me: Optional[User]) -> list[dict]:
                 "status": alias.coi_status if alias else "pending",
                 "detail": alias.coi_detail if alias else None,
             },
+            "expertise": {
+                "level": alias.expertise_level if alias else "pending",
+                "detail": alias.expertise_detail if alias else None,
+            },
             "votes": {"up": ups[c.id], "down": downs[c.id], "mine": mine.get(c.id, 0)},
             "is_mine": me is not None and c.user_id == me.id,
             "version": c.version,
