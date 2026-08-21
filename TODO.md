@@ -48,6 +48,10 @@ anchors, pseudonyms, COI badges, vote tallies, resolution states
 
 ## Review mechanics
 
+- [x] Authors comment under an "Author" label (ORCID-verified via the COI
+      check), not "Reviewer N" — the page is the whole venue: critique,
+      verified author response, revision, resolution, all on one public URL
+
 - [ ] Moderation basics: delete-own (soft delete preserving threads), report,
       admin remove — the editor's unglamorous jobs come due at any real scale
 - [ ] Side-by-side version view: show what a "written on v1, unresolved in v2"

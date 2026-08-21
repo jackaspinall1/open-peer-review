@@ -47,7 +47,11 @@ def comment_tree(db: Session, doc: Document, me: Optional[User]) -> list[dict]:
             "id": c.id,
             "anchor": json.loads(c.anchor_json) if c.anchor_json else None,
             "body": c.body,
-            "alias": f"Reviewer {alias.alias_number}" if alias else "Reviewer ?",
+            "alias": (
+                "Author"
+                if alias and alias.coi_status == "author"
+                else f"Reviewer {alias.alias_number}" if alias else "Reviewer ?"
+            ),
             "coi": {
                 "status": alias.coi_status if alias else "pending",
                 "detail": alias.coi_detail if alias else None,

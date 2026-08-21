@@ -153,6 +153,7 @@ h2 { font-size: 16px; margin: 0; }
 .pageref { margin-left: 8px; color: var(--muted); font-size: 11.5px; white-space: nowrap; }
 .commentmeta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .alias { font-weight: 700; font-size: 13.5px; }
+.alias.author { color: #a12b22; }
 .time { font-size: 12px; }
 .commentbody { font-size: 14px; margin: 8px 0; white-space: pre-wrap; }
 .commentactions { display: flex; align-items: center; gap: 12px; }

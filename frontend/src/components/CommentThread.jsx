@@ -16,8 +16,13 @@ function CommentCard({ comment, onVote, canVote, children }) {
   return (
     <div className="commenthead">
       <div className="commentmeta">
-        <span className="alias">{comment.alias}</span>
-        <CoiBadge coi={comment.coi} />
+        <span
+          className={comment.coi?.status === 'author' ? 'alias author' : 'alias'}
+          title={comment.coi?.status === 'author' ? comment.coi?.detail : undefined}
+        >
+          {comment.alias}
+        </span>
+        {comment.coi?.status !== 'author' && <CoiBadge coi={comment.coi} />}
         <span className="muted time">{timeAgo(comment.created_at)}</span>
       </div>
       <p className="commentbody">{comment.body}</p>
