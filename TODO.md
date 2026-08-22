@@ -49,8 +49,11 @@ anchors, pseudonyms, COI badges, vote tallies, resolution states
       display, don't weight, until real behaviour is observed
 - [ ] COI recency policy: colour active vs. historical co-authorship
       (funder convention: within 48 months; year already captured)
-- [ ] DOI → Crossref/OpenAlex metadata autofill on upload (closes the
-      "uploader omits an author to hide a COI" hole; kills typing friction)
+- [x] Upload autofill: client extracts title (largest-font heuristic) + DOI
+      (regex) from the PDF; OpenAlex supplies the verified record — canonical
+      title, full author list, ORCIDs from the paper's own authorships (never
+      name-guessing), affiliations. Editable, with provenance note. Closes the
+      "uploader omits an author to hide a COI" hole and kills typing friction
 
 ## Review mechanics
 

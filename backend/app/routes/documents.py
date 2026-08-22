@@ -8,7 +8,9 @@ from sqlalchemy.orm import Session
 
 import json as _json
 
-from .. import coi, config
+from pydantic import BaseModel
+
+from .. import coi, config, metadata
 from ..auth import require_user
 from ..db import get_db
 from ..models import Comment, Document, DocumentAuthor, User
@@ -18,6 +20,16 @@ from ..serialize import document_summary, full_document
 router = APIRouter(prefix="/api/documents")
 
 MAX_PDF_BYTES = 50 * 1024 * 1024
+
+
+class ResolveIn(BaseModel):
+    title: str | None = None
+    doi: str | None = None
+
+
+@router.post("/resolve-metadata")
+def resolve_metadata(payload: ResolveIn, user: User = Depends(require_user)):
+    return metadata.resolve(payload.title, payload.doi)
 
 
 @router.get("")
@@ -66,7 +78,9 @@ async def upload_document(
         orcid = normalize_orcid(orcid_raw) if orcid_raw else None
         if orcid_raw and orcid is None:
             raise HTTPException(status_code=422, detail=f"Invalid ORCID for author '{name}'")
-        db.add(DocumentAuthor(document_id=doc.id, name=name, orcid=orcid, position=i))
+        affiliation = (str(a.get("affiliation") or "").strip() or None)
+        db.add(DocumentAuthor(document_id=doc.id, name=name, orcid=orcid,
+                              affiliation=affiliation, position=i))
     topics = coi.classify_document(doc)  # best-effort; retried lazily if it fails
     if topics is not None:
         doc.topics_json = _json.dumps(topics)

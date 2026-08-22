@@ -49,6 +49,7 @@ class DocumentAuthor(Base):
     document_id: Mapped[int] = mapped_column(ForeignKey("documents.id", ondelete="CASCADE"))
     name: Mapped[str] = mapped_column(String(200))
     orcid: Mapped[Optional[str]] = mapped_column(String(19), nullable=True)
+    affiliation: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
     position: Mapped[int] = mapped_column(Integer, default=0)
 
     document: Mapped[Document] = relationship(back_populates="authors")

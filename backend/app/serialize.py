@@ -13,7 +13,7 @@ def document_summary(doc: Document, comment_count: int) -> dict:
         "id": doc.id,
         "title": doc.title,
         "doi": doc.doi,
-        "authors": [{"name": a.name, "orcid": a.orcid} for a in doc.authors],
+        "authors": [{"name": a.name, "orcid": a.orcid, "affiliation": a.affiliation} for a in doc.authors],
         "comment_count": comment_count,
         "version": doc.version,
         "created_at": doc.created_at.isoformat(),

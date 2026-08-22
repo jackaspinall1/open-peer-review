@@ -96,7 +96,9 @@ export default function ViewerPage() {
         <div>
           <h1>{doc.title}</h1>
           <div className="docmeta">
-            <span>{doc.authors.map((a) => a.name).join(', ')}</span>
+            <span title={doc.authors.map((a) => (a.affiliation ? `${a.name} — ${a.affiliation}` : a.name)).join('\n')}>
+              {doc.authors.map((a) => a.name).join(', ')}
+            </span>
             {doc.doi && <span className="doi">DOI: {doc.doi}</span>}
             <span>v{doc.version}</span>
           </div>
