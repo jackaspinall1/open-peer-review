@@ -26,6 +26,23 @@ normalised-name fallback, and employment date ranges intersected). ORCID
 employment lists are optional and visibility-controlled, and many are empty, so
 "No relationship found" means exactly that: not found, not disproved.
 
+## The workflow
+
+1. An author posts a preprint to arXiv / bioRxiv / ChemRxiv / Research Square.
+2. They sign in here with ORCID and pick that preprint from their own list —
+   the PDF, author list, ORCIDs, affiliations and topics are fetched
+   automatically from OpenAlex. Nothing is typed, and you can only add papers
+   your own ORCID is on.
+3. Reviewers highlight sentences and comment under per-paper pseudonyms, with
+   conflict-of-interest and topical-expertise badges computed from ORCID and
+   OpenAlex.
+4. The author posts a revised version to the preprint server and clicks "Check
+   for new version": the paper advances to v2 and comments re-anchor — text
+   that moved re-attaches, text that was rewritten surfaces as unresolved,
+   which is the review loop working.
+
+Manual PDF upload is still available for papers that are not indexed yet.
+
 ## Running it
 
 Backend (terminal 1):

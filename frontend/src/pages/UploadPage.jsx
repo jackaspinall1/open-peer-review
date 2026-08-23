@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { postForm, postJSON } from '../api'
+import { get, postForm, postJSON } from '../api'
 import { useMe } from '../auth'
 import { extractPdfMeta } from '../pdf/extractMeta'
 
@@ -16,6 +16,25 @@ export default function UploadPage() {
   const [error, setError] = useState(null)
   const [metaMsg, setMetaMsg] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [works, setWorks] = useState(null)
+  const [importing, setImporting] = useState(null)
+
+  useEffect(() => {
+    if (!me?.logged_in) return
+    get('/api/documents/my-works').then((r) => setWorks(r.works)).catch(() => setWorks([]))
+  }, [me?.logged_in])
+
+  const importWork = async (w) => {
+    setError(null)
+    setImporting(w.openalex_id)
+    try {
+      const { id } = await postJSON('/api/documents/import', { openalex_id: w.openalex_id })
+      navigate(`/doc/${id}`)
+    } catch (err) {
+      setError(err.message)
+      setImporting(null)
+    }
+  }
 
   if (me && !me.logged_in) {
     return (
@@ -76,7 +95,43 @@ export default function UploadPage() {
 
   return (
     <main className="page narrow">
-      <h1>Upload a paper</h1>
+      <h1>Add a paper</h1>
+
+      {works === null && <p className="muted">Looking up your papers…</p>}
+      {works?.length > 0 && (
+        <section className="card" style={{ marginBottom: 20 }}>
+          <h2>Your preprints</h2>
+          <p className="formnote">
+            Preprints listed under your ORCID iD. Adding one fetches the PDF and author
+            record automatically — nothing to type. When you post a revised version to the
+            preprint server, use “Check for new version” on the paper to pull it through.
+          </p>
+          <ul className="worklist">
+            {works.map((w) => (
+              <li key={w.openalex_id}>
+                <div>
+                  <span className="worktitle">{w.title}</span>
+                  <span className="workmeta">
+                    {[w.year, w.source].filter(Boolean).join(' · ')}
+                    {!w.likely_fetchable && ' · publisher may block automatic download'}
+                  </span>
+                </div>
+                <button className="primary small" disabled={!!importing} onClick={() => importWork(w)}>
+                  {importing === w.openalex_id ? 'Importing…' : 'Add for review'}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {works?.length === 0 && (
+        <p className="muted">
+          No preprints found under your ORCID iD (it can take a few days for a new preprint
+          to be indexed) — upload a PDF instead.
+        </p>
+      )}
+
+      <h2 style={{ margin: '24px 0 10px' }}>Or upload a PDF</h2>
       <form onSubmit={submit} className="card form">
         <label>PDF file
           <input type="file" accept="application/pdf" onChange={(e) => onFile(e.target.files[0])} required />

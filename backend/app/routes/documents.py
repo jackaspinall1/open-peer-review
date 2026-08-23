@@ -6,6 +6,7 @@ from fastapi.responses import FileResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+import hashlib
 import json as _json
 
 from pydantic import BaseModel
@@ -30,6 +31,70 @@ class ResolveIn(BaseModel):
 @router.post("/resolve-metadata")
 def resolve_metadata(payload: ResolveIn, user: User = Depends(require_user)):
     return metadata.resolve(payload.title, payload.doi)
+
+
+@router.get("/my-works")
+def my_works(user: User = Depends(require_user)):
+    try:
+        return {"works": metadata.list_importable_works(user.orcid)}
+    except Exception:
+        raise HTTPException(status_code=502, detail="Could not reach OpenAlex")
+
+
+class ImportIn(BaseModel):
+    openalex_id: str
+
+
+@router.post("/import")
+def import_work(payload: ImportIn, user: User = Depends(require_user), db: Session = Depends(get_db)):
+    try:
+        work = metadata.fetch_work(payload.openalex_id)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="Invalid work id")
+    except Exception:
+        raise HTTPException(status_code=502, detail="Could not fetch the work from OpenAlex")
+
+    shaped = metadata._shape(work, "import")
+    # author-initiated by construction: you can only import papers you are on
+    my = user.orcid
+    if not any(a["orcid"] == my for a in shaped["authors"]):
+        raise HTTPException(status_code=403, detail="You can only import papers you are an author of (by ORCID)")
+
+    candidates = metadata.pdf_candidates(work)
+    if not candidates:
+        raise HTTPException(status_code=422, detail="No open-access PDF available for this work")
+    content, used_url = None, None
+    for cand in candidates:
+        try:
+            content = metadata.download_pdf(cand["url"], MAX_PDF_BYTES)
+            used_url = cand["url"]
+            break
+        except Exception:
+            continue
+    if content is None:
+        raise HTTPException(
+            status_code=502,
+            detail="Could not fetch the PDF automatically (the publisher blocks downloads). "
+            "Please upload the PDF below instead.",
+        )
+
+    filename = f"{uuid.uuid4().hex}.pdf"
+    (config.PDF_DIR / filename).write_bytes(content)
+    doc = Document(title=shaped["title"], doi=shaped["doi"], pdf_filename=filename, uploaded_by=user.id,
+                   source_pdf_url=used_url, pdf_sha256=hashlib.sha256(content).hexdigest())
+    from ..coi import _topic_ref
+    topics = [_topic_ref(t) for t in (work.get("topics") or [])[:3]]
+    if topics:
+        doc.topics_json = _json.dumps(topics)
+    db.add(doc)
+    db.flush()
+    for i, a in enumerate(shaped["authors"]):
+        if not a["name"]:
+            continue
+        db.add(DocumentAuthor(document_id=doc.id, name=a["name"], orcid=a["orcid"],
+                              affiliation=a["affiliation"], position=i))
+    db.commit()
+    return {"id": doc.id}
 
 
 @router.get("")
@@ -109,9 +174,41 @@ async def upload_revision(
     (config.PDF_DIR / filename).write_bytes(content)
     # previous file is left on disk (future: version history route)
     doc.pdf_filename = filename
+    doc.pdf_sha256 = hashlib.sha256(content).hexdigest()
     doc.version += 1
     db.commit()
     return {"id": doc.id, "version": doc.version}
+
+
+@router.post("/{doc_id}/check-source")
+def check_source(doc_id: int, user: User = Depends(require_user), db: Session = Depends(get_db)):
+    """Re-fetch the preprint from its server; bump the version if it changed.
+
+    Preprint servers serve the latest version at a stable URL, so this is how a
+    revision posted to arXiv/bioRxiv propagates into the review record.
+    """
+    doc = db.get(Document, doc_id)
+    if doc is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+    if doc.uploaded_by != user.id:
+        raise HTTPException(status_code=403, detail="Only the uploader can refresh this paper")
+    if not doc.source_pdf_url:
+        raise HTTPException(status_code=422, detail="This paper was uploaded manually, not imported")
+    try:
+        content = metadata.download_pdf(doc.source_pdf_url, MAX_PDF_BYTES)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Could not fetch from the preprint server: {exc}")
+
+    digest = hashlib.sha256(content).hexdigest()
+    if digest == doc.pdf_sha256:
+        return {"id": doc.id, "version": doc.version, "updated": False}
+    filename = f"{uuid.uuid4().hex}.pdf"
+    (config.PDF_DIR / filename).write_bytes(content)
+    doc.pdf_filename = filename
+    doc.pdf_sha256 = digest
+    doc.version += 1
+    db.commit()
+    return {"id": doc.id, "version": doc.version, "updated": True}
 
 
 @router.get("/{doc_id}")

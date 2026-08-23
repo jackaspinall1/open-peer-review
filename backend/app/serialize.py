@@ -95,5 +95,6 @@ def full_document(db: Session, doc: Document, me: Optional[User]) -> dict:
     n = sum(1 + len(c["replies"]) for c in comments)
     out = document_summary(doc, n)
     out["is_uploader"] = me is not None and doc.uploaded_by == me.id
+    out["has_source"] = bool(doc.source_pdf_url)
     out["comments"] = comments
     return out

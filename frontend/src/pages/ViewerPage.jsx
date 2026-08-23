@@ -19,6 +19,21 @@ export default function ViewerPage() {
     get(`/api/documents/${id}`).then(setDoc).catch((e) => setError(e.message))
   }, [id])
 
+  const checkSource = async () => {
+    setToast('Checking the preprint server…')
+    try {
+      const r = await postJSON(`/api/documents/${id}/check-source`, {})
+      setDoc(await get(`/api/documents/${id}`))
+      setToast(
+        r.updated
+          ? `New version found — now showing v${r.version}. Comments are re-anchoring.`
+          : 'Already showing the latest version on the preprint server.',
+      )
+    } catch (e) {
+      setToast(e.message)
+    }
+  }
+
   const uploadRevision = async (file) => {
     if (!file) return
     try {
@@ -103,6 +118,11 @@ export default function ViewerPage() {
             <span>v{doc.version}</span>
           </div>
         </div>
+        {doc.is_uploader && doc.has_source && (
+          <button className="linkbtn revisionbtn" onClick={checkSource}>
+            Check for new version
+          </button>
+        )}
         {doc.is_uploader && (
           <label className="linkbtn revisionbtn">
             Upload revision

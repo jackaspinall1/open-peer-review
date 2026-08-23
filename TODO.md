@@ -24,6 +24,27 @@ anchors, pseudonyms, COI badges, vote tallies, resolution states
   against, a community collection as the umbrella; store the returned DOI on
   the document
 
+## Preprint workflow (the core loop)
+
+Post preprint to arXiv/bioRxiv/ChemRxiv → open review here → post the revised
+version back to the preprint server → "Check for new version" pulls it through,
+bumps the document version, and re-anchors older comments (moved text
+re-attaches; revised text surfaces as unresolved).
+
+- [x] Import from ORCID: signed-in authors pick from their own indexed
+      preprints; PDF + author record + ORCIDs + affiliations + topics fetched
+      automatically. Author-initiated by construction (you can only import
+      papers your ORCID is on)
+- [x] Preprint servers only (arXiv, bioRxiv, medRxiv, ChemRxiv, Research
+      Square, OSF, SSRN…); publisher copies are excluded — they 403 automated
+      fetches anyway
+- [x] Version tracking: stored PDF hash vs the preprint server's current file
+- [ ] Poll for new versions automatically rather than on demand (arXiv serves
+      the latest at a stable URL, so this is a cron over documents with a
+      source URL)
+- [ ] Push the review record back the other way: DOI/link to the review page in
+      the preprint's comments field where the server supports it
+
 ## Launch path
 
 - [ ] Republish repo (scheduled: evening commit + flip public)
