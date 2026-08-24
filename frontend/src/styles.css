@@ -77,6 +77,10 @@ h2 { font-size: 16px; margin: 0; }
 .doctitle:hover { color: var(--accent); }
 .docmeta { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 6px; font-size: 13px; color: var(--muted); }
 .count { font-weight: 600; color: var(--accent); }
+.licence { font-weight: 600; }
+.sourcelink { color: var(--accent); text-decoration: none; }
+.sourcelink:hover { text-decoration: underline; }
+.warranty { border-left: 2px solid var(--line); padding-left: 10px; }
 
 .worklist { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-direction: column; gap: 10px; }
 .worklist li {

@@ -5,6 +5,12 @@ import PdfViewer from '../pdf/PdfViewer'
 import SelectionPopover from '../pdf/SelectionPopover'
 import CommentSidebar from '../components/CommentSidebar'
 
+/** Human-readable licence, e.g. "cc-by-nc-nd" -> "CC BY-NC-ND". */
+function licenceLabel(code) {
+  if (!code) return null
+  return code.startsWith('cc-') ? code.replace('cc-', 'CC ').toUpperCase().replace('CC ', 'CC ') : code
+}
+
 export default function ViewerPage() {
   const { id } = useParams()
   const [doc, setDoc] = useState(null)
@@ -137,6 +143,12 @@ export default function ViewerPage() {
             </span>
             {doc.doi && <span className="doi">DOI: {doc.doi}</span>}
             <span>v{doc.version}</span>
+            {doc.license && <span className="licence">{licenceLabel(doc.license)}</span>}
+            {doc.source_url && (
+              <a className="sourcelink" href={doc.source_url} target="_blank" rel="noreferrer">
+                Original on {doc.source_name || 'the preprint server'} ↗
+              </a>
+            )}
           </div>
         </div>
         {doc.is_uploader && doc.has_source && (

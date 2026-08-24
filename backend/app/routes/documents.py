@@ -63,11 +63,11 @@ def import_work(payload: ImportIn, user: User = Depends(require_user), db: Sessi
     candidates = metadata.pdf_candidates(work)
     if not candidates:
         raise HTTPException(status_code=422, detail="No open-access PDF available for this work")
-    content, used_url = None, None
+    content, used = None, None
     for cand in candidates:
         try:
             content = metadata.download_pdf(cand["url"], MAX_PDF_BYTES)
-            used_url = cand["url"]
+            used = cand
             break
         except Exception:
             continue
@@ -80,8 +80,12 @@ def import_work(payload: ImportIn, user: User = Depends(require_user), db: Sessi
 
     filename = f"{uuid.uuid4().hex}.pdf"
     (config.PDF_DIR / filename).write_bytes(content)
-    doc = Document(title=shaped["title"], doi=shaped["doi"], pdf_filename=filename, uploaded_by=user.id,
-                   source_pdf_url=used_url, pdf_sha256=hashlib.sha256(content).hexdigest())
+    doc = Document(
+        title=shaped["title"], doi=shaped["doi"], pdf_filename=filename, uploaded_by=user.id,
+        source_pdf_url=used["url"], source_landing_url=used.get("landing_url"),
+        source_name=used.get("source"), license=used.get("license"),
+        pdf_sha256=hashlib.sha256(content).hexdigest(),
+    )
     from ..coi import _topic_ref
     topics = [_topic_ref(t) for t in (work.get("topics") or [])[:3]]
     if topics:

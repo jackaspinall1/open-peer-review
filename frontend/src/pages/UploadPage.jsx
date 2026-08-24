@@ -106,6 +106,10 @@ export default function UploadPage() {
             record automatically — nothing to type. When you post a revised version to the
             preprint server, use “Check for new version” on the paper to pull it through.
           </p>
+          <p className="formnote warranty">
+            By adding a paper you confirm you have the right to post it here on behalf of its
+            co-authors. Any listed author can ask for it to be removed.
+          </p>
           <ul className="worklist">
             {works.map((w) => (
               <li key={w.openalex_id}>
@@ -155,6 +159,10 @@ export default function UploadPage() {
           ))}
           <button type="button" className="linkbtn" onClick={() => setAuthors([...authors, { ...EMPTY }])}>+ Add author</button>
         </fieldset>
+        <p className="formnote warranty">
+          By uploading you confirm you have the right to post this paper here on behalf of its
+          co-authors. Any listed author can ask for it to be removed.
+        </p>
         {error && <p className="error">{error}</p>}
         <button type="submit" className="primary" disabled={busy || !file}>{busy ? 'Uploading…' : 'Upload'}</button>
       </form>

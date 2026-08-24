@@ -91,6 +91,42 @@ Sanctions beyond removal are intentionally absent for now. Because accounts are
 ORCID iDs, which cannot be cheaply abandoned, a ban is already a heavy sanction,
 and comments are pseudonymous to readers but not to the operator.
 
+## What this is, and what it will not become
+
+Public-good infrastructure, run non-commercially. That is a commitment about
+governance rather than a licence detail, and it has three practical
+consequences.
+
+It makes the content position unambiguous. Many preprints carry non-commercial
+licences (of one researcher's seven, four are CC BY-NC-ND), which a commercial
+service could not host at all. The corollary is that this cannot later become a
+paid product without removing those papers or seeking fresh permission.
+
+It sets the sustainability question correctly. Hosting costs a few pounds a
+month; the real risk to scholarly tools is not money but abandonment when one
+person's attention moves on. The answer is to make the platform disposable:
+reviews are intended to be deposited as citable archival artifacts (see
+TODO.md), so the record outlives the service that produced it. That is a better
+answer to "why invest effort here" than any promise of longevity.
+
+It explains the licence choice. AGPL-3.0 keeps hosted forks equally auditable,
+which matters because the anonymity and conflict-of-interest machinery only
+deserves trust if it can be inspected.
+
+## Papers, licences, and takedown
+
+Papers are added by their own authors: importing requires the signed-in user's
+ORCID to appear on the work, and both the import and upload paths state that the
+depositor confirms they have the right to post on behalf of their co-authors.
+That is what every repository does, and it matters because copyright in a paper
+is usually held jointly by all authors while preprint servers take only
+non-exclusive rights, so the authors remain free to license a copy here.
+
+The licence recorded by OpenAlex is stored at import and displayed on the paper
+page alongside a link to the original on the preprint server, which satisfies
+the attribution that CC licences require and keeps the canonical version
+primary. Any listed author can ask for a paper to be removed.
+
 ## The workflow
 
 1. An author posts a preprint to arXiv / bioRxiv / ChemRxiv / Research Square.

@@ -64,8 +64,10 @@ re-attaches; revised text surfaces as unresolved).
       hides nothing), moderator removal via ADMIN_ORCIDS, one-line conduct
       standard. No pre-publication gate and no tone filtering, by design
 - [x] Automated anonymity tests (backend/tests); 9 tests, offline
-- [ ] Record the preprint's licence at import (OpenAlex exposes it); restrict
-      stored copies to open licences, or proxy instead of storing
+- [x] Record and display the preprint's licence + link to the original; add a
+      depositor warranty at import. Author-initiated import means the depositor
+      is a rights holder, so no licence restriction is needed — but NC licences
+      do rule out a commercial pivot later
 - [ ] One-page privacy note (ORCID iDs and names of EU researchers are stored)
 
 ## Trust & identity

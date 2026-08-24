@@ -85,7 +85,9 @@ def pdf_candidates(work: dict) -> list[dict]:
         src = loc.get("source") or {}
         cands.append({
             "url": loc["pdf_url"],
+            "landing_url": loc.get("landing_page_url"),
             "source": src.get("display_name"),
+            "license": loc.get("license"),
             "is_repository": src.get("type") == "repository",
         })
     cands.sort(key=lambda c: not c["is_repository"])

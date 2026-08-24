@@ -16,6 +16,9 @@ def document_summary(doc: Document, comment_count: int) -> dict:
         "authors": [{"name": a.name, "orcid": a.orcid, "affiliation": a.affiliation} for a in doc.authors],
         "comment_count": comment_count,
         "version": doc.version,
+        "license": doc.license,
+        "source_name": doc.source_name,
+        "source_url": doc.source_landing_url or doc.source_pdf_url,
         "created_at": doc.created_at.isoformat(),
     }
 
