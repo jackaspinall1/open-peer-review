@@ -11,7 +11,8 @@ conflict-of-interest badge on every comment:
 | Badge | Meaning |
 |---|---|
 | Author | Commenter's ORCID matches a listed author |
-| Co-author relationship found | Commenter shares published work with an author (via OpenAlex), with recent/not-recent only |
+| Co-author relationship found | Commenter shares a normal-sized published work with an author (via OpenAlex), with recent/not-recent only |
+| Large-collaboration co-author | Shares only works with more than 15 authors (roadmaps, consortium papers), which is usually a weak connection |
 | Same institution | Overlapping employment with an author (via ORCID's public employment records), institution not named |
 | No relationship found | No co-authorship or affiliation overlap detected |
 | Unverifiable | No listed author has an ORCID |
@@ -40,6 +41,13 @@ bit, because funders commonly treat collaboration within 48 months as
 disqualifying and that genuinely changes a reader's judgement.
 
 The server still computes the full picture; it just does not publish it.
+
+Community roadmaps and consortium papers gather contributors from across a whole
+field, so they create co-authorship edges that are not collaborations in any
+meaningful sense. On a real record, a single 50-author roadmap supplied 46 of
+that researcher's 91 co-author edges. Works with more than 15 authors therefore
+produce a separate, weaker badge rather than counting as co-authorship, and
+recency is measured from normal-sized works only.
 
 The checks run strongest-first: author-list match, then OpenAlex co-authorship
 (one request per author; sorting by publication date descending with one result

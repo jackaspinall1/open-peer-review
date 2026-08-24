@@ -1,6 +1,7 @@
 const LABELS = {
   author: ['Author', 'coi-author'],
   coauthor: ['Co-author relationship found', 'coi-coauthor'],
+  large_collab: ['Large-collaboration co-author', 'coi-weak'],
   colleague: ['Same institution', 'coi-colleague'],
   none: ['No relationship found', 'coi-none'],
   unverifiable: ['Unverifiable', 'coi-grey'],

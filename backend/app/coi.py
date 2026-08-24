@@ -31,23 +31,32 @@ def _norm(orcid: str) -> str:
     return orcid.strip().upper().replace("HTTPS://ORCID.ORG/", "")
 
 
-def _shared_works(client: httpx.Client, orcid_a: str, orcid_b: str) -> tuple[int, int | None]:
-    """(number of co-authored works, year of the most recent one)."""
+def _shared_works(client: httpx.Client, orcid_a: str, orcid_b: str) -> tuple[int, int | None, int]:
+    """(normal co-authored works, year of the most recent one, large-collaboration works).
+
+    "Normal" means at or below LARGE_WORK_AUTHORS authors: an actual
+    collaboration rather than a shared appearance on a community roadmap.
+    """
     params = {
         "filter": f"author.orcid:https://orcid.org/{orcid_a},author.orcid:https://orcid.org/{orcid_b}",
-        "per-page": 1,
+        "per-page": 50,
         "sort": "publication_date:desc",
-        "select": "publication_year",
+        "select": "publication_year,authorships",
     }
     if config.OPENALEX_MAILTO:
         params["mailto"] = config.OPENALEX_MAILTO
     resp = client.get(f"{OPENALEX}/works", params=params)
     resp.raise_for_status()
-    data = resp.json()
-    count = data.get("meta", {}).get("count", 0)
-    results = data.get("results", [])
-    latest = results[0].get("publication_year") if results else None
-    return count, latest
+    normal, latest, large = 0, None, 0
+    for w in resp.json().get("results", []):
+        if len(w.get("authorships") or []) > LARGE_WORK_AUTHORS:
+            large += 1
+            continue
+        normal += 1
+        year = w.get("publication_year")
+        if year and (latest is None or year > latest):
+            latest = year
+    return normal, latest, large
 
 
 # Disclosure policy (see README "Anonymity and badge disclosure").
@@ -63,6 +72,14 @@ def _shared_works(client: httpx.Client, orcid_a: str, orcid_b: str) -> tuple[int
 # is kept at one bit because it is genuinely decision-relevant (funders commonly
 # treat collaboration within 48 months as disqualifying).
 RECENT_YEARS = 4
+
+# Roadmaps, consortium reports and community reviews gather contributors from
+# across a whole field, so they create co-authorship edges that are not
+# collaborations in any meaningful sense. Measured on a real record: one
+# 50-author roadmap supplied 46 of that researcher's 91 co-author edges. Works
+# above this many authors therefore signal a weaker relationship, reported
+# separately rather than as co-authorship.
+LARGE_WORK_AUTHORS = 15
 
 
 def _topic_ref(t: dict) -> dict:
@@ -194,19 +211,27 @@ def compute_coi(user: User, document: Document) -> tuple[str, str]:
 
     try:
         with httpx.Client(timeout=5) as client:
-            hits = []
+            hits, large_only = [], False
             for a in with_orcid:
-                n, latest = _shared_works(client, my_orcid, _norm(a.orcid))
+                n, latest, large = _shared_works(client, my_orcid, _norm(a.orcid))
                 if n > 0:
-                    hits.append((n, latest, a.name))
+                    hits.append((n, latest))
+                elif large > 0:
+                    large_only = True
             if hits:
                 hits.sort(key=lambda h: (h[1] or 0, h[0]), reverse=True)
-                _n, latest, _name = hits[0]
+                latest = hits[0][1]
                 recent = latest is not None and (datetime.now().year - int(latest)) <= RECENT_YEARS
                 return "coauthor", (
                     "Has co-authored with an author of this paper in the last "
                     f"{RECENT_YEARS} years" if recent
                     else "Has co-authored with an author of this paper, but not recently"
+                )
+            if large_only:
+                return "large_collab", (
+                    "Shares only large multi-author works with an author of this paper "
+                    f"(over {LARGE_WORK_AUTHORS} authors, such as a roadmap or consortium "
+                    "paper), which is usually a weak connection"
                 )
     except Exception as exc:  # network/API failure: report pending, retry later
         log.warning("OpenAlex COI check failed for %s: %s", user.orcid, exc)

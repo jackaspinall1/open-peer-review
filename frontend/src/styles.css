@@ -184,6 +184,7 @@ h2 { font-size: 16px; margin: 0; }
 .coi-author { background: #fde8e6; color: #a12b22; }
 .coi-coauthor { background: #fdf3d7; color: #8a6d0b; }
 .coi-colleague { background: #fdeede; color: #9a5b1f; }
+.coi-weak { background: #f5f1e6; color: #7a6a45; }
 .coi-none { background: #e5f3e8; color: #226b36; }
 .coi-grey { background: #ececec; color: #666; }
 .exp-strong { background: #e2ecf9; color: #17538f; }

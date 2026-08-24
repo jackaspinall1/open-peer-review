@@ -72,8 +72,12 @@ re-attaches; revised text surfaces as unresolved).
 - [x] "No publication record" badge for zero-work ORCIDs (the honest Sybil
       defence); algorithmic vote-weighting by expertise deliberately deferred —
       display, don't weight, until real behaviour is observed
-- [ ] COI recency policy: colour active vs. historical co-authorship
-      (funder convention: within 48 months; year already captured)
+- [x] COI recency: one bit, recent (4y) vs not, per funder convention
+- [x] Discount hyperauthorship: works with >15 authors (roadmaps, consortium
+      papers) give a separate weak badge, not co-authorship — one 50-author
+      roadmap was supplying half a researcher's co-author graph
+- [ ] Revisit the 15-author threshold if a field routinely publishes larger
+      genuine collaborations (particle physics, large clinical trials)
 - [x] Upload autofill: client extracts title (largest-font heuristic) + DOI
       (regex) from the PDF; OpenAlex supplies the verified record — canonical
       title, full author list, ORCIDs from the paper's own authorships (never
