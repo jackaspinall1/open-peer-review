@@ -50,15 +50,19 @@ def _shared_works(client: httpx.Client, orcid_a: str, orcid_b: str) -> tuple[int
     return count, latest
 
 
-def _bucket(n: int) -> str:
-    """Vague-ified counts: exact numbers on niche topics fingerprint individuals."""
-    if n >= 20:
-        return "20+"
-    if n >= 10:
-        return "10+"
-    if n >= 5:
-        return "5+"
-    return "a few"
+# Disclosure policy (see README "Anonymity and badge disclosure").
+#
+# Badges must support judgement without identifying the reviewer. Magnitudes are
+# the leak: measured against OpenAlex, "20+ shared works with an author" has an
+# anonymity set of ONE for typical researchers (their single closest
+# collaborator), and anyone can confirm it with one API query. Institution names
+# narrow a topic's author population by roughly three orders of magnitude.
+#
+# So the public strings carry the RELATIONSHIP and nothing quantitative: no
+# counts, no institution names, no author names, no seniority proxies. Recency
+# is kept at one bit because it is genuinely decision-relevant (funders commonly
+# treat collaboration within 48 months as disqualifying).
+RECENT_YEARS = 4
 
 
 def _topic_ref(t: dict) -> dict:
@@ -110,34 +114,17 @@ def compute_expertise(user: User, doc_topics: list[dict] | None) -> tuple[str, s
             return "no_record", "No publications found for this ORCID iD"
         mine = [dict(_topic_ref(t), count=t.get("count", 0)) for t in results[0].get("topics") or []]
 
-        years = ""
-        try:
-            fp = {"filter": f"author.orcid:{user.orcid}", "per-page": 1,
-                  "sort": "publication_date:asc", "select": "publication_year"}
-            if config.OPENALEX_MAILTO:
-                fp["mailto"] = config.OPENALEX_MAILTO
-            first = client.get(f"{OPENALEX}/works", params=fp).json()["results"][0]["publication_year"]
-            active = datetime.now().year - int(first)
-            if active >= 10:
-                years = ", publishing 10+ years"
-            elif active >= 5:
-                years = ", publishing 5+ years"
-        except Exception:
-            pass
-
-    for key, id_field, name_field, level in (
-        ("id", "id", "name", "topic"),
-        ("subfield_id", "subfield_id", "subfield_name", "subfield"),
-        ("field_id", "field_id", "field_name", "field"),
+    # Level only. Work counts and years-active are withheld: both are seniority
+    # proxies that shrink the anonymity set, and neither changes the judgement a
+    # reader makes (does this person work in this area, yes or no).
+    for id_field, level, phrase in (
+        ("id", "topic", "Publishes on this paper's topic"),
+        ("subfield_id", "subfield", "Publishes in this paper's subfield"),
+        ("field_id", "field", "Publishes in this paper's broader field"),
     ):
         doc_ids = {t[id_field] for t in doc_topics}
-        matched = [t for t in mine if t[id_field] in doc_ids]
-        if matched:
-            n = sum(t["count"] for t in matched)
-            name = matched[0][name_field] if level == "topic" else next(
-                t[name_field] for t in doc_topics if t[id_field] == matched[0][id_field])
-            noun = {"topic": "on", "subfield": "in", "field": "in"}[level]
-            return level, f"{_bucket(n)} works {noun} {name}{years}"
+        if any(t[id_field] in doc_ids for t in mine):
+            return level, phrase
     return "none", "No publication record in this paper's area"
 
 
@@ -214,9 +201,13 @@ def compute_coi(user: User, document: Document) -> tuple[str, str]:
                     hits.append((n, latest, a.name))
             if hits:
                 hits.sort(key=lambda h: (h[1] or 0, h[0]), reverse=True)
-                n, latest, _name = hits[0]
-                recency = f", most recent {latest}" if latest else ""
-                return "coauthor", f"Co-authored with one of the authors ({_bucket(n)} shared works{recency})"
+                _n, latest, _name = hits[0]
+                recent = latest is not None and (datetime.now().year - int(latest)) <= RECENT_YEARS
+                return "coauthor", (
+                    "Has co-authored with an author of this paper in the last "
+                    f"{RECENT_YEARS} years" if recent
+                    else "Has co-authored with an author of this paper, but not recently"
+                )
     except Exception as exc:  # network/API failure: report pending, retry later
         log.warning("OpenAlex COI check failed for %s: %s", user.orcid, exc)
         return "pending", "Check not yet completed"
@@ -229,7 +220,9 @@ def compute_coi(user: User, document: Document) -> tuple[str, str]:
                 for a in with_orcid:
                     org = _overlapping_org(mine, _fetch_employments(client, _norm(a.orcid)))
                     if org:
-                        return "colleague", f"Affiliated with an author's institution ({org})"
+                        # institution name withheld: it narrows a topic's author
+                        # population by ~3 orders of magnitude
+                        return "colleague", "Shares an institution with an author of this paper"
     except Exception as exc:
         log.warning("ORCID employment check failed for %s: %s", user.orcid, exc)
         # co-authorship already came back clean; degrade to 'none' rather than pending

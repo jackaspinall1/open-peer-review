@@ -63,8 +63,12 @@ re-attaches; revised text surfaces as unresolved).
       title classification); bucketed counts + years-active only — career
       titles and institutions deliberately NOT displayed (reimports hierarchy,
       shrinks the anonymity set)
-- [x] De-fingerprint COI details: bucketed counts, no author names
-      ("Co-authored with one of the authors (20+ shared works)")
+- [x] De-fingerprint every badge: no counts, no institution names, no author
+      names, no seniority proxies. Driven by measurement, not taste — a
+      "20+ shared works" badge has an anonymity set of ONE against OpenAlex.
+      Relationship + one bit of recency only
+- [ ] Revisit if/when a badge needs more granularity: check the anonymity set
+      against OpenAlex first (see README), never add magnitudes by default
 - [x] "No publication record" badge for zero-work ORCIDs (the honest Sybil
       defence); algorithmic vote-weighting by expertise deliberately deferred —
       display, don't weight, until real behaviour is observed

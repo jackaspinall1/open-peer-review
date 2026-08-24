@@ -11,11 +11,35 @@ conflict-of-interest badge on every comment:
 | Badge | Meaning |
 |---|---|
 | Author | Commenter's ORCID matches a listed author |
-| Co-author relationship found | Commenter shares published work with an author (via OpenAlex; detail shows count and most recent year) |
-| Same institution | Overlapping employment with an author (via ORCID's public employment records) |
+| Co-author relationship found | Commenter shares published work with an author (via OpenAlex), with recent/not-recent only |
+| Same institution | Overlapping employment with an author (via ORCID's public employment records), institution not named |
 | No relationship found | No co-authorship or affiliation overlap detected |
 | Unverifiable | No listed author has an ORCID |
 | Verification pending | OpenAlex check failed; retried automatically |
+
+### Anonymity and badge disclosure
+
+Badges must carry enough for a reader to judge a comment and too little to
+identify who wrote it. Magnitudes turned out to be the leak, and the anonymity
+sets are measurable against OpenAlex:
+
+- "20+ shared works with an author" has an anonymity set of **one** for a
+  typical researcher (it names their single closest collaborator), and anyone
+  can confirm it with a single API query.
+- Naming an institution narrows a topic's author population by roughly three
+  orders of magnitude (284,000 authors on a battery-materials topic; 339 of
+  them at one named university).
+- Topic membership alone is safe: OpenAlex topics carry authors in the tens of
+  thousands.
+
+So the public strings state the relationship and nothing quantitative: no
+counts, no institution names, no author names, and no seniority proxies such as
+work totals or years-active (which would also reimport the career hierarchy
+that pseudonymity exists to remove). Recency of co-authorship is kept at one
+bit, because funders commonly treat collaboration within 48 months as
+disqualifying and that genuinely changes a reader's judgement.
+
+The server still computes the full picture; it just does not publish it.
 
 The checks run strongest-first: author-list match, then OpenAlex co-authorship
 (one request per author; sorting by publication date descending with one result
