@@ -12,7 +12,7 @@ function timeAgo(iso) {
   return new Date(iso).toLocaleDateString()
 }
 
-function CommentCard({ comment, onVote, canVote, children }) {
+function CommentCard({ comment, onVote, canVote, onDelete, onReport, children }) {
   return (
     <div className="commenthead">
       <div className="commentmeta">
@@ -26,16 +26,24 @@ function CommentCard({ comment, onVote, canVote, children }) {
         {comment.coi?.status !== 'author' && <ExpertiseBadge expertise={comment.expertise} />}
         <span className="muted time">{timeAgo(comment.created_at)}</span>
       </div>
-      <p className="commentbody">{comment.body}</p>
-      <div className="commentactions">
-        <VoteButtons comment={comment} onVote={onVote} disabled={!canVote || comment.is_mine} />
-        {children}
-      </div>
+      <p className={comment.deleted ? 'commentbody muted' : 'commentbody'}>{comment.body}</p>
+      {!comment.deleted && (
+        <div className="commentactions">
+          <VoteButtons comment={comment} onVote={onVote} disabled={!canVote || comment.is_mine} />
+          {children}
+          {canVote && comment.is_mine && (
+            <button className="linkbtn" onClick={() => onDelete(comment)}>Delete</button>
+          )}
+          {canVote && !comment.is_mine && (
+            <button className="linkbtn subtle" onClick={() => onReport(comment)}>Report</button>
+          )}
+        </div>
+      )}
     </div>
   )
 }
 
-export default function CommentThread({ comment, docVersion, resolution, active, onVote, onPost, onFocus }) {
+export default function CommentThread({ comment, docVersion, resolution, active, onVote, onPost, onFocus, onDelete, onReport }) {
   const { me } = useMe()
   const location = useLocation()
   const [replying, setReplying] = useState(false)
@@ -66,7 +74,7 @@ export default function CommentThread({ comment, docVersion, resolution, active,
           </span>
         </blockquote>
       )}
-      <CommentCard comment={comment} onVote={onVote} canVote={loggedIn}>
+      <CommentCard comment={comment} onVote={onVote} canVote={loggedIn} onDelete={onDelete} onReport={onReport}>
         {loggedIn ? (
           <button className="linkbtn" onClick={() => setReplying(!replying)}>Reply</button>
         ) : (
@@ -75,7 +83,7 @@ export default function CommentThread({ comment, docVersion, resolution, active,
       </CommentCard>
       {comment.replies.map((r) => (
         <div key={r.id} id={`comment-${r.id}`} className="reply">
-          <CommentCard comment={r} onVote={onVote} canVote={loggedIn} />
+          <CommentCard comment={r} onVote={onVote} canVote={loggedIn} onDelete={onDelete} onReport={onReport} />
         </div>
       ))}
       {replying && (

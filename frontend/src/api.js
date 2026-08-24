@@ -21,3 +21,5 @@ export const postJSON = (url, body) =>
 
 export const postForm = (url, formData) =>
   fetch(url, { method: 'POST', body: formData }).then(handle)
+
+export const del = (url) => fetch(url, { method: 'DELETE' }).then(handle)

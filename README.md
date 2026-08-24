@@ -67,6 +67,30 @@ normalised-name fallback, and employment date ranges intersected). ORCID
 employment lists are optional and visibility-controlled, and many are empty, so
 "No relationship found" means exactly that: not found, not disproved.
 
+## Moderation
+
+Deliberately minimal and reversible, because gates are what make review systems
+dysfunctional. Nothing is ever held for approval: comments publish immediately,
+reports queue for a human and hide nothing by themselves, and removal happens
+after the fact.
+
+- **Delete your own comment**: soft delete. The text goes, the thread and any
+  replies remain readable, and the card shows "[deleted by the commenter]".
+- **Report**: any signed-in reader can flag a comment. Moderators see the queue
+  at `GET /api/admin/reports`, which includes the reporter's relationship to the
+  paper, since the predictable abuse of reporting is authors flagging criticism
+  of their own work.
+- **Moderator removal**: ORCID iDs listed in `ADMIN_ORCIDS` can remove any
+  comment; it is labelled "[removed by a moderator]" rather than vanishing.
+- **The standard is one line**: criticise the work, not the person. It permits
+  unlimited harshness toward the science, which is the point. No tone filtering:
+  softening blunt criticism would reproduce the failure this project exists to
+  fix.
+
+Sanctions beyond removal are intentionally absent for now. Because accounts are
+ORCID iDs, which cannot be cheaply abandoned, a ban is already a heavy sanction,
+and comments are pseudonymous to readers but not to the operator.
+
 ## The workflow
 
 1. An author posts a preprint to arXiv / bioRxiv / ChemRxiv / Research Square.
@@ -142,6 +166,18 @@ cd backend
 .venv/bin/python seed.py paper.pdf "Paper title" --doi 10.1000/xyz \
   --author "Jane Doe:0000-0002-1825-0097" --author "John Smith"
 ```
+
+## Tests
+
+```bash
+cd backend && .venv/bin/python -m pytest tests -q
+```
+
+`tests/test_anonymity.py` asserts the product's central promise: that public
+payloads never carry a name, ORCID, institution or work count, and that aliases
+do not link a person across papers. These are the regressions that would be
+most damaging and least visible, so they are checked automatically rather than
+by hand. Tests stub out OpenAlex and ORCID, so they run offline.
 
 ## End-to-end test
 

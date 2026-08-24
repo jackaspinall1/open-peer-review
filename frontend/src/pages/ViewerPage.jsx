@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { get, postForm, postJSON } from '../api'
+import { del, get, postForm, postJSON } from '../api'
 import PdfViewer from '../pdf/PdfViewer'
 import SelectionPopover from '../pdf/SelectionPopover'
 import CommentSidebar from '../components/CommentSidebar'
@@ -86,6 +86,27 @@ export default function ViewerPage() {
     }))
   }
 
+  const deleteComment = async (comment) => {
+    if (!window.confirm('Delete this comment? Replies to it will remain.')) return
+    try {
+      await del(`/api/comments/${comment.id}`)
+      setDoc(await get(`/api/documents/${id}`))
+    } catch (e) {
+      setToast(e.message)
+    }
+  }
+
+  const reportComment = async (comment) => {
+    const reason = window.prompt('Report this comment for a moderator to review. Reason (optional):')
+    if (reason === null) return
+    try {
+      await postJSON(`/api/comments/${comment.id}/report`, { reason })
+      setToast('Reported. A moderator will review it; nothing is hidden automatically.')
+    } catch (e) {
+      setToast(e.message)
+    }
+  }
+
   const focusComment = useCallback((commentId) => {
     setActiveId(commentId)
     document.getElementById(`comment-${commentId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -156,6 +177,8 @@ export default function ViewerPage() {
           onVote={(cid, v) => vote(cid, v).catch((e) => setToast(e.message))}
           onFocus={focusHighlight}
           onStartGeneral={() => setDraft({ anchor: null })}
+          onDelete={deleteComment}
+          onReport={reportComment}
         />
       </div>
       <SelectionPopover popover={popover} onComment={startDraft} />

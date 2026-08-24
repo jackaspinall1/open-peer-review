@@ -62,7 +62,7 @@ function DraftCard({ draft, onPost, onCancel }) {
   )
 }
 
-export default function CommentSidebar({ comments, docVersion, resolutions, draft, activeId, onPost, onCancelDraft, onVote, onFocus, onStartGeneral }) {
+export default function CommentSidebar({ comments, docVersion, resolutions, draft, activeId, onPost, onCancelDraft, onVote, onFocus, onStartGeneral, onDelete, onReport }) {
   return (
     <aside className="sidebar">
       <div className="sidebarhead">
@@ -75,6 +75,9 @@ export default function CommentSidebar({ comments, docVersion, resolutions, draf
           Select a sentence in the paper to leave the first comment.
         </p>
       )}
+      {comments.length > 0 && (
+        <p className="conduct">Criticise the work, not the person.</p>
+      )}
       {comments.map((c) => (
         <CommentThread
           key={c.id}
@@ -85,6 +88,8 @@ export default function CommentSidebar({ comments, docVersion, resolutions, draf
           onVote={onVote}
           onPost={onPost}
           onFocus={onFocus}
+          onDelete={onDelete}
+          onReport={onReport}
         />
       ))}
     </aside>

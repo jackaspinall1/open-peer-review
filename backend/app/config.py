@@ -62,6 +62,11 @@ ORCID_REDIRECT_URI = os.environ.get("ORCID_REDIRECT_URI", "http://localhost:5173
 # Where to send the browser after login (the Vite dev server in development).
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 
+# ORCID iDs allowed to remove comments, comma-separated.
+ADMIN_ORCIDS = {
+    o.strip().upper() for o in os.environ.get("ADMIN_ORCIDS", "").split(",") if o.strip()
+}
+
 # OpenAlex asks for a mailto to route you into the polite (faster) request pool.
 OPENALEX_MAILTO = os.environ.get("OPENALEX_MAILTO", "")
 

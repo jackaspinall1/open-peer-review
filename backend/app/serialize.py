@@ -41,12 +41,18 @@ def comment_tree(db: Session, doc: Document, me: Optional[User]) -> list[dict]:
             if me is not None and v.user_id == me.id:
                 mine[v.comment_id] = v.value
 
+    DELETED_TEXT = {
+        "author": "[deleted by the commenter]",
+        "moderator": "[removed by a moderator]",
+    }
+
     def shape(c: Comment) -> dict:
         alias = aliases.get(c.user_id)
         return {
             "id": c.id,
             "anchor": json.loads(c.anchor_json) if c.anchor_json else None,
-            "body": c.body,
+            "body": DELETED_TEXT.get(c.deleted_by, "[deleted]") if c.deleted else c.body,
+            "deleted": bool(c.deleted),
             "alias": (
                 "Author"
                 if alias and alias.coi_status == "author"

@@ -5,10 +5,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from ..auth import require_user
+from ..auth import get_current_user, require_user
 from ..coi import get_or_create_alias
 from ..db import get_db
-from ..models import Comment, Document, User, Vote
+from .. import config
+from ..models import Comment, Document, Report, User, Vote
 from ..serialize import comment_tree
 
 router = APIRouter(prefix="/api")
@@ -21,6 +22,10 @@ class CommentIn(BaseModel):
     body: str
     anchor: Optional[dict] = None
     parent_id: Optional[int] = None
+
+
+class ReportIn(BaseModel):
+    reason: Optional[str] = None
 
 
 class VoteIn(BaseModel):
@@ -114,3 +119,87 @@ def vote(
         "down": sum(1 for v in votes if v.value < 0),
         "mine": next((v.value for v in votes if v.user_id == user.id), 0),
     }
+
+
+def _is_admin(user: User) -> bool:
+    return user.orcid.upper() in config.ADMIN_ORCIDS
+
+
+@router.delete("/comments/{comment_id}")
+def delete_comment(
+    comment_id: int,
+    user: User = Depends(require_user),
+    db: Session = Depends(get_db),
+):
+    """Soft delete. Replies and thread structure survive; the text does not."""
+    comment = db.get(Comment, comment_id)
+    if comment is None:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    admin = _is_admin(user)
+    if comment.user_id != user.id and not admin:
+        raise HTTPException(status_code=403, detail="You can only delete your own comments")
+    comment.deleted = True
+    comment.deleted_by = "moderator" if (admin and comment.user_id != user.id) else "author"
+    db.commit()
+    return {"id": comment.id, "deleted": True}
+
+
+@router.post("/comments/{comment_id}/report")
+def report_comment(
+    comment_id: int,
+    payload: ReportIn,
+    user: User = Depends(require_user),
+    db: Session = Depends(get_db),
+):
+    """Flag a comment for human review. Reports never hide anything by themselves."""
+    comment = db.get(Comment, comment_id)
+    if comment is None:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    if comment.user_id == user.id:
+        raise HTTPException(status_code=422, detail="You cannot report your own comment")
+    existing = (
+        db.query(Report)
+        .filter(Report.comment_id == comment_id, Report.user_id == user.id)
+        .one_or_none()
+    )
+    if existing is None:
+        db.add(Report(comment_id=comment_id, user_id=user.id,
+                      reason=(payload.reason or "").strip()[:500] or None))
+        db.commit()
+    return {"reported": True}
+
+
+@router.get("/admin/reports")
+def list_reports(user: User = Depends(require_user), db: Session = Depends(get_db)):
+    """Open reports for a human to judge.
+
+    Includes the reporter's relationship to the paper, because a report from an
+    author of the paper is a much weaker signal than one from an uninvolved
+    reader: the predictable abuse of reporting is authors flagging criticism.
+    """
+    if not _is_admin(user):
+        raise HTTPException(status_code=403, detail="Not a moderator")
+    from ..models import ReviewerAlias
+
+    out = []
+    for r in db.query(Report).filter(Report.resolved == False).order_by(Report.created_at).all():  # noqa: E712
+        comment = db.get(Comment, r.comment_id)
+        if comment is None:
+            continue
+        alias = (
+            db.query(ReviewerAlias)
+            .filter(ReviewerAlias.document_id == comment.document_id,
+                    ReviewerAlias.user_id == r.user_id)
+            .one_or_none()
+        )
+        out.append({
+            "report_id": r.id,
+            "comment_id": comment.id,
+            "document_id": comment.document_id,
+            "body": comment.body,
+            "already_deleted": comment.deleted,
+            "reason": r.reason,
+            "reporter_relationship": alias.coi_status if alias else "unknown",
+            "reported_at": r.created_at.isoformat(),
+        })
+    return {"reports": out}

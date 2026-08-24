@@ -60,11 +60,10 @@ re-attaches; revised text surfaces as unresolved).
 
 ## Before a public deployment
 
-- [ ] Moderation basics: there is currently NONE. Soft-delete own comment,
-      report, admin remove. Untenable when hosting criticism of named people
-- [ ] Automated test that public payloads never contain a name, ORCID,
-      institution or work count — anonymity is the core promise and is
-      currently guaranteed only by manual checking
+- [x] Moderation basics: soft-delete own comment, report (queues for a human,
+      hides nothing), moderator removal via ADMIN_ORCIDS, one-line conduct
+      standard. No pre-publication gate and no tone filtering, by design
+- [x] Automated anonymity tests (backend/tests); 9 tests, offline
 - [ ] Record the preprint's licence at import (OpenAlex exposes it); restrict
       stored copies to open licences, or proxy instead of storing
 - [ ] One-page privacy note (ORCID iDs and names of EU researchers are stored)
@@ -104,8 +103,6 @@ re-attaches; revised text surfaces as unresolved).
       check), not "Reviewer N" — the page is the whole venue: critique,
       verified author response, revision, resolution, all on one public URL
 
-- [ ] Moderation basics: delete-own (soft delete preserving threads), report,
-      admin remove — the editor's unglamorous jobs come due at any real scale
 - [ ] Side-by-side version view: show what a "written on v1, unresolved in v2"
       comment pointed at
 - [ ] Editorial summary state per paper: "N expert reviews, M unresolved major

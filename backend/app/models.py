@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Optional
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .db import Base
@@ -91,10 +91,27 @@ class Comment(Base):
     anchor_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     body: Mapped[str] = mapped_column(Text)
     version: Mapped[int] = mapped_column(Integer, default=1)  # doc version when written
+    # Soft delete: the thread structure and any replies survive, the text does not.
+    deleted: Mapped[bool] = mapped_column(Boolean, default=False)
+    deleted_by: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)  # author | moderator
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
     document: Mapped[Document] = relationship(back_populates="comments")
     votes: Mapped[list["Vote"]] = relationship(cascade="all, delete-orphan")
+
+
+class Report(Base):
+    """A reader flagging a comment. Reports never hide anything by themselves."""
+
+    __tablename__ = "reports"
+    __table_args__ = (UniqueConstraint("comment_id", "user_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    comment_id: Mapped[int] = mapped_column(ForeignKey("comments.id", ondelete="CASCADE"))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    reason: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    resolved: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class Vote(Base):
