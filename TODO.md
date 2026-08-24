@@ -74,8 +74,9 @@ re-attaches; revised text surfaces as unresolved).
       display, don't weight, until real behaviour is observed
 - [x] COI recency: one bit, recent (4y) vs not, per funder convention
 - [x] Discount hyperauthorship: works with >15 authors (roadmaps, consortium
-      papers) give a separate weak badge, not co-authorship — one 50-author
-      roadmap was supplying half a researcher's co-author graph
+      papers) are not co-authorship — one 50-author roadmap was supplying half
+      a researcher's co-author graph. Count-sensitive too: one shared roadmap
+      reads as no relationship, 3+ distinct ones earn the weak badge
 - [ ] Revisit the 15-author threshold if a field routinely publishes larger
       genuine collaborations (particle physics, large clinical trials)
 - [x] Upload autofill: client extracts title (largest-font heuristic) + DOI

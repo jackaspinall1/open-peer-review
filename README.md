@@ -12,7 +12,7 @@ conflict-of-interest badge on every comment:
 |---|---|
 | Author | Commenter's ORCID matches a listed author |
 | Co-author relationship found | Commenter shares a normal-sized published work with an author (via OpenAlex), with recent/not-recent only |
-| Large-collaboration co-author | Shares only works with more than 15 authors (roadmaps, consortium papers), which is usually a weak connection |
+| Large-collaboration co-author | Appears on 3 or more works with over 15 authors (roadmaps, consortium papers) with an author, which often means a shared programme |
 | Same institution | Overlapping employment with an author (via ORCID's public employment records), institution not named |
 | No relationship found | No co-authorship or affiliation overlap detected |
 | Unverifiable | No listed author has an ORCID |
@@ -46,8 +46,17 @@ Community roadmaps and consortium papers gather contributors from across a whole
 field, so they create co-authorship edges that are not collaborations in any
 meaningful sense. On a real record, a single 50-author roadmap supplied 46 of
 that researcher's 91 co-author edges. Works with more than 15 authors therefore
-produce a separate, weaker badge rather than counting as co-authorship, and
-recency is measured from normal-sized works only.
+do not count as co-authorship, and recency is measured from normal-sized works
+only.
+
+Count matters as well as size. Sharing one field-wide roadmap says almost
+nothing, and labelling an independent reviewer conflicted on that basis
+discredits legitimate criticism for no reason, so a single such work is reported
+as no relationship (the tooltip still states what was found, so nothing is
+hidden). Three or more distinct large works with the same author usually
+indicates a shared programme, and that does earn the weaker badge. Distinct
+works are counted rather than per-author matches, since one roadmap commonly
+contains several of a paper's authors.
 
 The checks run strongest-first: author-list match, then OpenAlex co-authorship
 (one request per author; sorting by publication date descending with one result

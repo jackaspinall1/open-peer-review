@@ -31,8 +31,8 @@ def _norm(orcid: str) -> str:
     return orcid.strip().upper().replace("HTTPS://ORCID.ORG/", "")
 
 
-def _shared_works(client: httpx.Client, orcid_a: str, orcid_b: str) -> tuple[int, int | None, int]:
-    """(normal co-authored works, year of the most recent one, large-collaboration works).
+def _shared_works(client: httpx.Client, orcid_a: str, orcid_b: str) -> tuple[int, int | None, set[str]]:
+    """(normal co-authored works, year of the most recent one, large-work ids).
 
     "Normal" means at or below LARGE_WORK_AUTHORS authors: an actual
     collaboration rather than a shared appearance on a community roadmap.
@@ -41,16 +41,16 @@ def _shared_works(client: httpx.Client, orcid_a: str, orcid_b: str) -> tuple[int
         "filter": f"author.orcid:https://orcid.org/{orcid_a},author.orcid:https://orcid.org/{orcid_b}",
         "per-page": 50,
         "sort": "publication_date:desc",
-        "select": "publication_year,authorships",
+        "select": "id,publication_year,authorships",
     }
     if config.OPENALEX_MAILTO:
         params["mailto"] = config.OPENALEX_MAILTO
     resp = client.get(f"{OPENALEX}/works", params=params)
     resp.raise_for_status()
-    normal, latest, large = 0, None, 0
+    normal, latest, large = 0, None, set()
     for w in resp.json().get("results", []):
         if len(w.get("authorships") or []) > LARGE_WORK_AUTHORS:
-            large += 1
+            large.add(w["id"])  # ids, not a count: one roadmap can contain several authors
             continue
         normal += 1
         year = w.get("publication_year")
@@ -80,6 +80,14 @@ RECENT_YEARS = 4
 # above this many authors therefore signal a weaker relationship, reported
 # separately rather than as co-authorship.
 LARGE_WORK_AUTHORS = 15
+
+# One shared roadmap says almost nothing: those papers gather a whole field, and
+# labelling an independent reviewer "conflicted" on that basis discredits
+# legitimate criticism for no reason. Repeatedly appearing on the same
+# consortium outputs is different, since it usually means a shared programme.
+# Below this many DISTINCT large works, the relationship is reported as none
+# (the tooltip still says what was found, so nothing is hidden).
+LARGE_COLLAB_MIN = 3
 
 
 def _topic_ref(t: dict) -> dict:
@@ -211,13 +219,12 @@ def compute_coi(user: User, document: Document) -> tuple[str, str]:
 
     try:
         with httpx.Client(timeout=5) as client:
-            hits, large_only = [], False
+            hits, large_ids = [], set()
             for a in with_orcid:
                 n, latest, large = _shared_works(client, my_orcid, _norm(a.orcid))
                 if n > 0:
                     hits.append((n, latest))
-                elif large > 0:
-                    large_only = True
+                large_ids |= large
             if hits:
                 hits.sort(key=lambda h: (h[1] or 0, h[0]), reverse=True)
                 latest = hits[0][1]
@@ -227,11 +234,16 @@ def compute_coi(user: User, document: Document) -> tuple[str, str]:
                     f"{RECENT_YEARS} years" if recent
                     else "Has co-authored with an author of this paper, but not recently"
                 )
-            if large_only:
+            if len(large_ids) >= LARGE_COLLAB_MIN:
                 return "large_collab", (
-                    "Shares only large multi-author works with an author of this paper "
-                    f"(over {LARGE_WORK_AUTHORS} authors, such as a roadmap or consortium "
-                    "paper), which is usually a weak connection"
+                    f"Appears on {LARGE_COLLAB_MIN} or more large multi-author works "
+                    "with an author of this paper (roadmaps or consortium papers), which "
+                    "often means a shared programme"
+                )
+            if large_ids:
+                return "none", (
+                    "No substantive co-authorship found; shares only an occasional "
+                    "large multi-author paper, such as a field-wide roadmap"
                 )
     except Exception as exc:  # network/API failure: report pending, retry later
         log.warning("OpenAlex COI check failed for %s: %s", user.orcid, exc)
