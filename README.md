@@ -127,8 +127,13 @@ To enable real ORCID sign-in:
 3. Copy the client ID and secret into `backend/.env`
    (`ORCID_CLIENT_ID=APP-…`, `ORCID_CLIENT_SECRET=…`) and restart the backend.
 
-Also in `.env`: `SECRET_KEY` (set a long random string for anything non-local) and
-`OPENALEX_MAILTO=you@example.com` (joins OpenAlex's polite, faster request pool).
+Also in `.env`: `OPENALEX_MAILTO=you@example.com` (joins OpenAlex's polite,
+faster request pool) and `SECRET_KEY`, which signs session cookies. Anyone who
+knows that key can forge a login as any ORCID iD, so there is deliberately no
+default: set a long random string, or leave it blank and one will be generated
+and stored in `data/secret_key` (mode 600). Generate one with
+`python3 -c "import secrets; print(secrets.token_urlsafe(48))"`. Changing it
+signs everyone out, which is the intended behaviour if a key is ever exposed.
 
 ## Seeding a document from the CLI
 

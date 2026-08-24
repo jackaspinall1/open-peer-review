@@ -47,7 +47,9 @@ re-attaches; revised text surfaces as unresolved).
 
 ## Launch path
 
-- [ ] Republish repo (scheduled: evening commit + flip public)
+- [x] Republish repo publicly (AGPL)
+- [x] Real SECRET_KEY; no hardcoded default (a known key in a public repo lets
+      anyone forge a session for any ORCID iD)
 - [ ] Deploy a hosted instance (Fly.io/Render, SQLite on a volume); add the
       deployed callback URI to the ORCID client (fields are editable)
 - [ ] OG meta tags so shared paper links unfurl on X/Bluesky/Slack with
@@ -55,6 +57,17 @@ re-attaches; revised text surfaces as unresolved).
 - [ ] Decide upload policy deliberately: author-initiated only (uploader's
       ORCID must be on the author list) vs. anyone (PubPeer-style critic
       convening) — one `if`, big cultural consequence
+
+## Before a public deployment
+
+- [ ] Moderation basics: there is currently NONE. Soft-delete own comment,
+      report, admin remove. Untenable when hosting criticism of named people
+- [ ] Automated test that public payloads never contain a name, ORCID,
+      institution or work count — anonymity is the core promise and is
+      currently guaranteed only by manual checking
+- [ ] Record the preprint's licence at import (OpenAlex exposes it); restrict
+      stored copies to open licences, or proxy instead of storing
+- [ ] One-page privacy note (ORCID iDs and names of EU researchers are stored)
 
 ## Trust & identity
 

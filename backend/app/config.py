@@ -21,7 +21,31 @@ DATA_DIR = Path(os.environ.get("DATA_DIR", PROJECT_ROOT / "data"))
 PDF_DIR = DATA_DIR / "pdfs"
 DB_PATH = DATA_DIR / "app.db"
 
-SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-change-me")
+def _secret_key() -> str:
+    """Session-signing key.
+
+    A hardcoded default is a real vulnerability once the source is public:
+    anyone who reads it can forge a session cookie for any ORCID iD. So there is
+    no default. If the environment does not supply one, generate a random key
+    and persist it, which keeps sessions stable across restarts without ever
+    sharing a known secret.
+    """
+    from_env = os.environ.get("SECRET_KEY", "").strip()
+    if from_env:
+        return from_env
+    import secrets
+
+    key_file = DATA_DIR / "secret_key"
+    if key_file.exists():
+        return key_file.read_text().strip()
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    key = secrets.token_urlsafe(48)
+    key_file.write_text(key)
+    key_file.chmod(0o600)
+    return key
+
+
+SECRET_KEY = _secret_key()
 
 # "mock" = dev login form only; "orcid" = real ORCID sign-in only (requires a
 # registered public API client); "both" = ORCID button plus the dev form.
