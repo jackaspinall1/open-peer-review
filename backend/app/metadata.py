@@ -166,3 +166,23 @@ def download_pdf(url: str, max_bytes: int) -> bytes:
     if not content.startswith(b"%PDF-"):
         raise ValueError("URL did not return a PDF")
     return content
+
+
+def normalise_doi(doi: str | None) -> str | None:
+    """Version-stripped, lowercase DOI, used as an identity key.
+
+    Preprint servers mint a DOI per version (10.21203/rs.3.rs-6759455/v1), so
+    the raw DOI would make v1 and v2 look like different papers.
+    """
+    if not doi:
+        return None
+    d = doi.strip().lower()
+    for prefix in ("https://doi.org/", "http://doi.org/", "doi:"):
+        if d.startswith(prefix):
+            d = d[len(prefix):]
+    d = re.sub(r"/v\d+$", "", d)
+    # bioRxiv/medRxiv append the version without a separator; only strip there,
+    # since a bare trailing "v<digits>" is legitimate in other DOIs.
+    if d.startswith("10.1101/"):
+        d = re.sub(r"v\d+$", "", d)
+    return d or None

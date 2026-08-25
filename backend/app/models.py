@@ -25,7 +25,12 @@ class Document(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(500))
-    doi: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    # Identity keys: one live discussion per paper, or the review splits in two.
+    # OpenAlex merges a preprint with its published version into one work, so its
+    # id survives that transition; the DOI is stored version-stripped for the same
+    # reason (preprint servers mint a DOI per version).
+    openalex_id: Mapped[Optional[str]] = mapped_column(String(30), unique=True, nullable=True)
+    doi: Mapped[Optional[str]] = mapped_column(String(200), unique=True, nullable=True)
     pdf_filename: Mapped[str] = mapped_column(String(200))
     version: Mapped[int] = mapped_column(Integer, default=1)
     topics_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # OpenAlex topics

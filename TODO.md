@@ -72,6 +72,12 @@ re-attaches; revised text surfaces as unresolved).
 
 ## Trust & identity
 
+- [x] One live discussion per paper: dedupe on OpenAlex work id, then
+      version-stripped DOI. Paper control belongs to any listed author by
+      ORCID, not just the depositor (otherwise a non-author can squat a paper)
+- [ ] Soft duplicate warning for manual uploads with no DOI (title match);
+      warn rather than block, since it cannot be decided reliably
+
 - [x] Expertise badge: topic/subfield/field-tiered match between reviewer's
       OpenAlex topic profile and the paper's topics (DOI lookup or /text/topics
       title classification); bucketed counts + years-active only — career

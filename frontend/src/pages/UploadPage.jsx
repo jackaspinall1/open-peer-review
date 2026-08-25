@@ -15,6 +15,7 @@ export default function UploadPage() {
   const [file, setFile] = useState(null)
   const [error, setError] = useState(null)
   const [metaMsg, setMetaMsg] = useState(null)
+  const [toast, setToast] = useState(null)
   const [busy, setBusy] = useState(false)
   const [works, setWorks] = useState(null)
   const [importing, setImporting] = useState(null)
@@ -28,7 +29,8 @@ export default function UploadPage() {
     setError(null)
     setImporting(w.openalex_id)
     try {
-      const { id } = await postJSON('/api/documents/import', { openalex_id: w.openalex_id })
+      const { id, existing } = await postJSON('/api/documents/import', { openalex_id: w.openalex_id })
+      if (existing) setToast('That paper is already here — opening its review page.')
       navigate(`/doc/${id}`)
     } catch (err) {
       setError(err.message)
@@ -85,7 +87,8 @@ export default function UploadPage() {
       fd.append('title', title)
       fd.append('doi', doi)
       fd.append('authors', JSON.stringify(authors.filter((a) => a.name.trim())))
-      const { id } = await postForm('/api/documents', fd)
+      const { id, existing } = await postForm('/api/documents', fd)
+      if (existing) setToast('That paper is already here — opening its review page.')
       navigate(`/doc/${id}`)
     } catch (err) {
       setError(err.message)
@@ -95,6 +98,7 @@ export default function UploadPage() {
 
   return (
     <main className="page narrow">
+      {toast && <div className="toast">{toast}</div>}
       <h1>Add a paper</h1>
 
       {works === null && <p className="muted">Looking up your papers…</p>}

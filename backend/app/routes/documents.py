@@ -23,6 +23,30 @@ router = APIRouter(prefix="/api/documents")
 MAX_PDF_BYTES = 50 * 1024 * 1024
 
 
+def can_manage(user: User, doc: Document) -> bool:
+    """Who controls a paper: the person who added it, or any listed author.
+
+    Tying control to the depositor alone would let a non-author who added a
+    paper first lock its real authors out of opening review on their own work.
+    """
+    if user is None:
+        return False
+    if doc.uploaded_by == user.id:
+        return True
+    return user.orcid.upper() in {a.orcid.upper() for a in doc.authors if a.orcid}
+
+
+def _existing_document(db: Session, openalex_id: str | None, doi: str | None) -> Document | None:
+    """One live discussion per paper: a second copy would split the review."""
+    if openalex_id:
+        hit = db.query(Document).filter(Document.openalex_id == openalex_id).one_or_none()
+        if hit:
+            return hit
+    if doi:
+        return db.query(Document).filter(Document.doi == doi).one_or_none()
+    return None
+
+
 class ResolveIn(BaseModel):
     title: str | None = None
     doi: str | None = None
@@ -54,7 +78,12 @@ def import_work(payload: ImportIn, user: User = Depends(require_user), db: Sessi
     except Exception:
         raise HTTPException(status_code=502, detail="Could not fetch the work from OpenAlex")
 
+    openalex_id = work["id"].rsplit("/", 1)[-1]
     shaped = metadata._shape(work, "import")
+    existing = _existing_document(db, openalex_id, metadata.normalise_doi(shaped["doi"]))
+    if existing is not None:
+        return {"id": existing.id, "existing": True}
+
     # author-initiated by construction: you can only import papers you are on
     my = user.orcid
     if not any(a["orcid"] == my for a in shaped["authors"]):
@@ -81,7 +110,8 @@ def import_work(payload: ImportIn, user: User = Depends(require_user), db: Sessi
     filename = f"{uuid.uuid4().hex}.pdf"
     (config.PDF_DIR / filename).write_bytes(content)
     doc = Document(
-        title=shaped["title"], doi=shaped["doi"], pdf_filename=filename, uploaded_by=user.id,
+        title=shaped["title"], doi=metadata.normalise_doi(shaped["doi"]),
+        openalex_id=openalex_id, pdf_filename=filename, uploaded_by=user.id,
         source_pdf_url=used["url"], source_landing_url=used.get("landing_url"),
         source_name=used.get("source"), license=used.get("license"),
         pdf_sha256=hashlib.sha256(content).hexdigest(),
@@ -133,10 +163,15 @@ async def upload_document(
     if not content.startswith(b"%PDF-"):
         raise HTTPException(status_code=422, detail="File is not a PDF")
 
+    doi_key = metadata.normalise_doi(doi)
+    existing = _existing_document(db, None, doi_key)
+    if existing is not None:
+        return {"id": existing.id, "existing": True}
+
     filename = f"{uuid.uuid4().hex}.pdf"
     (config.PDF_DIR / filename).write_bytes(content)
 
-    doc = Document(title=title.strip(), doi=doi.strip() or None, pdf_filename=filename, uploaded_by=user.id)
+    doc = Document(title=title.strip(), doi=doi_key, pdf_filename=filename, uploaded_by=user.id)
     db.add(doc)
     db.flush()
     for i, a in enumerate(author_list):
@@ -167,8 +202,8 @@ async def upload_revision(
     doc = db.get(Document, doc_id)
     if doc is None:
         raise HTTPException(status_code=404, detail="Document not found")
-    if doc.uploaded_by != user.id:
-        raise HTTPException(status_code=403, detail="Only the original uploader can post a revision")
+    if not can_manage(user, doc):
+        raise HTTPException(status_code=403, detail="Only an author of this paper can post a revision")
     content = await pdf.read()
     if len(content) > MAX_PDF_BYTES:
         raise HTTPException(status_code=413, detail="PDF too large (50 MB limit)")
@@ -194,8 +229,8 @@ def check_source(doc_id: int, user: User = Depends(require_user), db: Session = 
     doc = db.get(Document, doc_id)
     if doc is None:
         raise HTTPException(status_code=404, detail="Document not found")
-    if doc.uploaded_by != user.id:
-        raise HTTPException(status_code=403, detail="Only the uploader can refresh this paper")
+    if not can_manage(user, doc):
+        raise HTTPException(status_code=403, detail="Only an author of this paper can refresh it")
     if not doc.source_pdf_url:
         raise HTTPException(status_code=422, detail="This paper was uploaded manually, not imported")
     try:
@@ -221,8 +256,8 @@ def open_review_round(doc_id: int, user: User = Depends(require_user), db: Sessi
     doc = db.get(Document, doc_id)
     if doc is None:
         raise HTTPException(status_code=404, detail="Document not found")
-    if doc.uploaded_by != user.id:
-        raise HTTPException(status_code=403, detail="Only the author who added this paper can open review")
+    if not can_manage(user, doc):
+        raise HTTPException(status_code=403, detail="Only an author of this paper can open review")
     try:
         rounds.open_round(db, doc)
     except ValueError as exc:
@@ -235,8 +270,8 @@ def extend_review_round(doc_id: int, user: User = Depends(require_user), db: Ses
     doc = db.get(Document, doc_id)
     if doc is None:
         raise HTTPException(status_code=404, detail="Document not found")
-    if doc.uploaded_by != user.id:
-        raise HTTPException(status_code=403, detail="Only the author who added this paper can extend review")
+    if not can_manage(user, doc):
+        raise HTTPException(status_code=403, detail="Only an author of this paper can extend review")
     try:
         rounds.extend_round(db, doc)
     except ValueError as exc:

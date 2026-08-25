@@ -106,7 +106,9 @@ def full_document(db: Session, doc: Document, me: Optional[User]) -> dict:
     comments = comment_tree(db, doc, me)
     n = sum(1 + len(c["replies"]) for c in comments)
     out = document_summary(doc, n)
-    out["is_uploader"] = me is not None and doc.uploaded_by == me.id
+    from .routes.documents import can_manage
+
+    out["can_manage"] = can_manage(me, doc) if me is not None else False
     out["has_source"] = bool(doc.source_pdf_url)
     from . import rounds as _rounds
 

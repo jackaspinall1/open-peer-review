@@ -67,6 +67,24 @@ normalised-name fallback, and employment date ranges intersected). ORCID
 employment lists are optional and visibility-controlled, and many are empty, so
 "No relationship found" means exactly that: not found, not disproved.
 
+## One paper, one discussion
+
+A second copy of a paper would split its review in two, so papers are
+deduplicated on import and upload. Adding a paper that is already here simply
+opens the existing discussion rather than creating a rival one.
+
+Two identity keys are used. The OpenAlex work id is preferred because OpenAlex
+merges a preprint with its published version into a single work, so the key
+survives that transition. The DOI is the fallback, stored version-stripped,
+because preprint servers mint a DOI per version and the raw form would make v1
+and v2 look like different papers. Manually uploaded papers with no DOI cannot
+be deduplicated reliably and are not.
+
+Control over a paper (opening a review round, extending it, posting a revision)
+belongs to **any listed author**, matched by ORCID, not only to whoever added
+it. Otherwise a non-author who added a paper first would lock its real authors
+out of reviewing their own work.
+
 ## Review rounds
 
 Review happens in a bounded window per version, because reviewing is solicited

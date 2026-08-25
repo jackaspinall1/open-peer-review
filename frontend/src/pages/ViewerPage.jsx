@@ -167,12 +167,12 @@ export default function ViewerPage() {
             )}
           </div>
         </div>
-        {doc.is_uploader && doc.has_source && (
+        {doc.can_manage && doc.has_source && (
           <button className="linkbtn revisionbtn" onClick={checkSource}>
             Check for new version
           </button>
         )}
-        {doc.is_uploader && (
+        {doc.can_manage && (
           <label className="linkbtn revisionbtn">
             Upload revision
             <input
@@ -186,7 +186,7 @@ export default function ViewerPage() {
       </div>
       <RoundBar
         round={doc.round}
-        isAuthor={doc.is_uploader}
+        isAuthor={doc.can_manage}
         busy={roundBusy}
         onOpen={() => roundAction('rounds', 'Review window open for 14 days. Now go and ask people.')}
         onExtend={() => roundAction('rounds/extend', 'Extended by a week.')}
