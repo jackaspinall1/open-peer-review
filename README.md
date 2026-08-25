@@ -67,6 +67,28 @@ normalised-name fallback, and employment date ranges intersected). ORCID
 employment lists are optional and visibility-controlled, and many are empty, so
 "No relationship found" means exactly that: not found, not disproved.
 
+## Review rounds
+
+Review happens in a bounded window per version, because reviewing is solicited
+work: an open-ended invitation slides, a dated one gets answered. The author
+opens a round explicitly, which is also the moment to go and ask colleagues to
+look, since a direct request from an author is the highest-converting message in
+the whole system.
+
+- **Two weeks**, extendable a week at a time up to a month when engagement is
+  thin. There is no deadline on the author afterwards: revising is their own
+  work, and "revise within 30 days" is a journal pathology this avoids.
+- The author's only discretionary lever **increases scrutiny**: they can extend
+  but never close early, so no rules are needed about who deserves an extension.
+- **The window bounds the record, not the page.** Comments posted after it are
+  still accepted, marked "after the window", and excluded from the round's
+  counts. Losing a correct criticism to a deadline would be exactly the kind of
+  dysfunction that checks are meant to prevent.
+- The round is displayed with its dates, extensions and participation, so a thin
+  round reads as thin instead of hiding behind the word "reviewed". A countdown
+  is public, because urgency nobody can see motivates nobody, and the author is
+  nudged to go and ask people when the window is closing quietly.
+
 ## Moderation
 
 Deliberately minimal and reversible, because gates are what make review systems

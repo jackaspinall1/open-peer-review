@@ -101,6 +101,15 @@ re-attaches; revised text surfaces as unresolved).
 
 ## Review mechanics
 
+- [x] Review rounds: 2-week window per version, extendable weekly to a month,
+      author-opened, public countdown, late comments accepted but marked and
+      excluded from the record, participation shown so thin rounds look thin
+- [ ] Version bump should not silently start a new round (currently a source
+      refresh bumps the version; opening a round stays a separate, explicit act
+      — confirm that reads correctly once a real revision happens)
+- [ ] Notify topic-matched reviewers when a round opens (the solicitation step;
+      needs the personalised queue below)
+
 - [x] Authors comment under an "Author" label (ORCID-verified via the COI
       check), not "Reviewer N" — the page is the whole venue: critique,
       verified author response, revision, resolution, all on one public URL

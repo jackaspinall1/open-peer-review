@@ -82,6 +82,26 @@ class ReviewerAlias(Base):
     coi_checked_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
 
+class ReviewRound(Base):
+    """A bounded window of public review over one version of a paper.
+
+    The window supplies the deadline that turns willingness into reviews, and
+    its closing supplies the terminal state an author needs to call the paper
+    reviewed. It bounds the *record*, not the page: comments are still accepted
+    afterwards and marked as arriving late, because a correct criticism should
+    never be lost to a deadline.
+    """
+
+    __tablename__ = "review_rounds"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    document_id: Mapped[int] = mapped_column(ForeignKey("documents.id", ondelete="CASCADE"))
+    version: Mapped[int] = mapped_column(Integer)
+    opened_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    closes_at: Mapped[datetime] = mapped_column(DateTime)
+    extensions: Mapped[int] = mapped_column(Integer, default=0)
+
+
 class Comment(Base):
     __tablename__ = "comments"
 
@@ -94,6 +114,10 @@ class Comment(Base):
     anchor_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     body: Mapped[str] = mapped_column(Text)
     version: Mapped[int] = mapped_column(Integer, default=1)  # doc version when written
+    # The round open when this was posted; NULL means outside any window.
+    round_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("review_rounds.id", ondelete="SET NULL"), nullable=True
+    )
     # Soft delete: the thread structure and any replies survive, the text does not.
     deleted: Mapped[bool] = mapped_column(Boolean, default=False)
     deleted_by: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)  # author | moderator

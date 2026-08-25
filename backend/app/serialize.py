@@ -5,7 +5,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from .models import Comment, Document, ReviewerAlias, User, Vote
+from .models import Comment, Document, ReviewerAlias, ReviewRound, User, Vote
 
 
 def document_summary(doc: Document, comment_count: int) -> dict:
@@ -27,6 +27,7 @@ def comment_tree(db: Session, doc: Document, me: Optional[User]) -> list[dict]:
     comments = (
         db.query(Comment).filter(Comment.document_id == doc.id).order_by(Comment.created_at).all()
     )
+    has_rounds = db.query(ReviewRound).filter(ReviewRound.document_id == doc.id).count() > 0
     aliases = {
         a.user_id: a
         for a in db.query(ReviewerAlias).filter(ReviewerAlias.document_id == doc.id).all()
@@ -72,6 +73,8 @@ def comment_tree(db: Session, doc: Document, me: Optional[User]) -> list[dict]:
             "votes": {"up": ups[c.id], "down": downs[c.id], "mine": mine.get(c.id, 0)},
             "is_mine": me is not None and c.user_id == me.id,
             "version": c.version,
+            # Late comments are kept and marked rather than refused.
+            "after_window": has_rounds and c.round_id is None,
             "created_at": c.created_at.isoformat(),
             "replies": [],
         }
@@ -105,5 +108,8 @@ def full_document(db: Session, doc: Document, me: Optional[User]) -> dict:
     out = document_summary(doc, n)
     out["is_uploader"] = me is not None and doc.uploaded_by == me.id
     out["has_source"] = bool(doc.source_pdf_url)
+    from . import rounds as _rounds
+
+    out["round"] = _rounds.summarise(db, doc)
     out["comments"] = comments
     return out

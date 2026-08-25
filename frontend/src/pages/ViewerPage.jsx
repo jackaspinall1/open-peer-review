@@ -4,6 +4,7 @@ import { del, get, postForm, postJSON } from '../api'
 import PdfViewer from '../pdf/PdfViewer'
 import SelectionPopover from '../pdf/SelectionPopover'
 import CommentSidebar from '../components/CommentSidebar'
+import RoundBar from '../components/RoundBar'
 
 /** Human-readable licence, e.g. "cc-by-nc-nd" -> "CC BY-NC-ND". */
 function licenceLabel(code) {
@@ -24,6 +25,21 @@ export default function ViewerPage() {
   useEffect(() => {
     get(`/api/documents/${id}`).then(setDoc).catch((e) => setError(e.message))
   }, [id])
+
+  const [roundBusy, setRoundBusy] = useState(false)
+
+  const roundAction = async (path, okMsg) => {
+    setRoundBusy(true)
+    try {
+      await postJSON(`/api/documents/${id}/${path}`, {})
+      setDoc(await get(`/api/documents/${id}`))
+      setToast(okMsg)
+    } catch (e) {
+      setToast(e.message)
+    } finally {
+      setRoundBusy(false)
+    }
+  }
 
   const checkSource = async () => {
     setToast('Checking the preprint server…')
@@ -168,6 +184,13 @@ export default function ViewerPage() {
           </label>
         )}
       </div>
+      <RoundBar
+        round={doc.round}
+        isAuthor={doc.is_uploader}
+        busy={roundBusy}
+        onOpen={() => roundAction('rounds', 'Review window open for 14 days. Now go and ask people.')}
+        onExtend={() => roundAction('rounds/extend', 'Extended by a week.')}
+      />
       <div className="viewerbody">
         <PdfViewer
           url={`/api/documents/${id}/pdf?v=${doc.version}`}

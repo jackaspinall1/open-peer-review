@@ -11,7 +11,7 @@ import json as _json
 
 from pydantic import BaseModel
 
-from .. import coi, config, metadata
+from .. import coi, config, metadata, rounds
 from ..auth import require_user
 from ..db import get_db
 from ..models import Comment, Document, DocumentAuthor, User
@@ -213,6 +213,35 @@ def check_source(doc_id: int, user: User = Depends(require_user), db: Session = 
     doc.version += 1
     db.commit()
     return {"id": doc.id, "version": doc.version, "updated": True}
+
+
+@router.post("/{doc_id}/rounds")
+def open_review_round(doc_id: int, user: User = Depends(require_user), db: Session = Depends(get_db)):
+    """Open a review window. Explicit, because it is also the moment to ask people."""
+    doc = db.get(Document, doc_id)
+    if doc is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+    if doc.uploaded_by != user.id:
+        raise HTTPException(status_code=403, detail="Only the author who added this paper can open review")
+    try:
+        rounds.open_round(db, doc)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return rounds.summarise(db, doc)
+
+
+@router.post("/{doc_id}/rounds/extend")
+def extend_review_round(doc_id: int, user: User = Depends(require_user), db: Session = Depends(get_db)):
+    doc = db.get(Document, doc_id)
+    if doc is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+    if doc.uploaded_by != user.id:
+        raise HTTPException(status_code=403, detail="Only the author who added this paper can extend review")
+    try:
+        rounds.extend_round(db, doc)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return rounds.summarise(db, doc)
 
 
 @router.get("/{doc_id}")

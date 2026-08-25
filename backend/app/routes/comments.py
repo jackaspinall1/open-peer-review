@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from ..auth import get_current_user, require_user
 from ..coi import get_or_create_alias
+from ..rounds import open_round_for
 from ..db import get_db
 from .. import config
 from ..models import Comment, Document, Report, User, Vote
@@ -80,6 +81,7 @@ def create_comment(
         anchor_json=json.dumps(anchor) if anchor else None,
         body=body,
         version=doc.version,
+        round_id=(lambda r: r.id if r else None)(open_round_for(db, doc)),
     )
     db.add(comment)
     db.commit()
