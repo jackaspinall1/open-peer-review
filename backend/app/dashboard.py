@@ -16,18 +16,8 @@ a claim that it was.
 from sqlalchemy.orm import Session
 
 from .models import Comment, Document, DocumentAuthor, ReviewRound, User
+from .serialize import author_user_ids
 from .rounds import summarise
-
-
-def _author_user_ids(db: Session, doc: Document) -> set[int]:
-    """Users who count as authors of this paper: the depositor plus ORCID matches."""
-    ids = {doc.uploaded_by} if doc.uploaded_by else set()
-    orcids = {a.orcid.upper() for a in doc.authors if a.orcid}
-    if orcids:
-        ids |= {
-            u.id for u in db.query(User).all() if u.orcid.upper() in orcids
-        }
-    return ids
 
 
 def _counts(db: Session, doc: Document) -> dict:
@@ -36,7 +26,7 @@ def _counts(db: Session, doc: Document) -> dict:
         .filter(Comment.document_id == doc.id, Comment.deleted == False)  # noqa: E712
         .all()
     )
-    authors = _author_user_ids(db, doc)
+    authors = author_user_ids(db, doc)
     replies_by_parent: dict[int, list[Comment]] = {}
     for c in comments:
         if c.parent_id is not None:

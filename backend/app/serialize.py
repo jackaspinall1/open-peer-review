@@ -8,6 +8,15 @@ from sqlalchemy.orm import Session
 from .models import Comment, Document, ReviewerAlias, ReviewRound, User, Vote
 
 
+def author_user_ids(db: Session, doc: Document) -> set[int]:
+    """Users who count as authors here: the depositor plus ORCID matches."""
+    ids = {doc.uploaded_by} if doc.uploaded_by else set()
+    orcids = {a.orcid for a in doc.authors if a.orcid}
+    if orcids:
+        ids |= {u.id for u in db.query(User).filter(User.orcid.in_(orcids)).all()}
+    return ids
+
+
 def document_summary(doc: Document, comment_count: int) -> dict:
     return {
         "id": doc.id,
@@ -72,12 +81,24 @@ def comment_tree(db: Session, doc: Document, me: Optional[User]) -> list[dict]:
             },
             "votes": {"up": ups[c.id], "down": downs[c.id], "mine": mine.get(c.id, 0)},
             "is_mine": me is not None and c.user_id == me.id,
+            "by_author": c.user_id in authors,
+            # What traditional review surfaces too: a criticism and whether an
+            # author answered it. No resolution verdict is claimed.
+            "answered": c.parent_id is None
+            and c.user_id not in authors
+            and any(r.user_id in authors for r in replies_by_parent.get(c.id, [])),
             "version": c.version,
             # Late comments are kept and marked rather than refused.
             "after_window": has_rounds and c.round_id is None,
             "created_at": c.created_at.isoformat(),
             "replies": [],
         }
+
+    authors = author_user_ids(db, doc)
+    replies_by_parent: dict[int, list[Comment]] = {}
+    for c in comments:
+        if c.parent_id is not None:
+            replies_by_parent.setdefault(c.parent_id, []).append(c)
 
     by_id = {c.id: c for c in comments}
     shaped = {c.id: shape(c) for c in comments}

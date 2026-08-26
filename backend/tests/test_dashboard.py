@@ -77,3 +77,31 @@ def test_papers_you_are_not_on_do_not_appear(client):
 def test_dashboard_requires_login(client):
     client.post("/auth/logout")
     assert client.get("/api/documents/mine").status_code == 401
+
+
+def test_threads_report_whether_an_author_answered(client):
+    """What the record shows: a criticism and whether an author replied.
+
+    No resolution verdict is asserted, which is all traditional peer review
+    surfaces either.
+    """
+    login(client, AUTHOR)
+    doc = make_document(client, authors=[{"name": "Ada", "orcid": AUTHOR}])
+    login(client, REVIEWER)
+    cid = comment(client, doc, "a concern")["comments"][0]["id"]
+    assert client.get(f"/api/documents/{doc}").json()["comments"][0]["answered"] is False
+
+    login(client, AUTHOR)
+    comment(client, doc, "addressed in section 4", parent_id=cid)
+    thread = client.get(f"/api/documents/{doc}").json()["comments"][0]
+    assert thread["answered"] is True
+    assert thread["by_author"] is False
+    assert thread["replies"][0]["by_author"] is True
+
+
+def test_an_authors_own_thread_is_not_marked_awaiting(client):
+    login(client, AUTHOR)
+    doc = make_document(client, authors=[{"name": "Ada", "orcid": AUTHOR}])
+    comment(client, doc, "a note from the author")
+    thread = client.get(f"/api/documents/{doc}").json()["comments"][0]
+    assert thread["by_author"] is True and thread["answered"] is False

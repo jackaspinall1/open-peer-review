@@ -112,10 +112,12 @@ re-attaches; revised text surfaces as unresolved).
 
 - [x] Author page (/me): papers matched by ORCID, under review vs past, window
       timeline, comment counts and how many await an author reply
-- [ ] Real resolved/unresolved state: needs comment typing (major/minor/
-      question) plus the client reporting whether each anchor still resolves,
-      since the server cannot know that. The author page shows "on an earlier
-      version" as a stand-in and labels it as a hint
+- [x] Thread state: "Awaiting author response" / "Answered by an author", plus
+      "passage revised/unchanged in vN" from the anchoring once a revision
+      exists. Deliberately NO resolved/unresolved verdict: that is all
+      traditional review surfaces, and it removes the satisfaction step, the
+      notification email it depended on (ORCID gives us no address), and the
+      need for comment typing
 - [ ] Deposit closed rounds to Zenodo and store the DOI in documents.review_doi
       (the column and the author-page link already exist, unpopulated)
 

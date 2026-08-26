@@ -116,11 +116,20 @@ uploaded them, split into those under review and those whose window has closed.
 Past entries link to the final version on the preprint server and, once round
 deposits exist, to the citable review record.
 
-The counts are limited to what the server can actually know, which is worth
-stating because the obvious metric is missing. Whether a criticism was
-*resolved* cannot be computed server-side: anchoring runs in the browser, so
-only the client can tell whether a quoted passage still exists in the current
-version. Rather than invent that number, the page reports three facts:
+The counts are limited to what the server can actually know. There is
+deliberately no resolved/unresolved verdict anywhere in this system: what
+traditional peer review surfaces is a criticism and the author's response, and
+readers judge for themselves. Each thread therefore shows whether an author has
+answered it, and nothing more is claimed.
+
+The one thing this record does that a journal's cannot is verify the response.
+A response-to-reviewers letter says "we have revised the text accordingly" and
+no reader can check. Because anchoring already knows whether a quoted passage
+still exists in the current version, a thread written against an earlier version
+is labelled "passage revised in v2" or "passage unchanged in v2" next to the
+author's claim. That costs nothing extra, since the client computes it anyway.
+
+The author's page reports three facts:
 
 | Metric | Meaning |
 |---|---|

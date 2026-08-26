@@ -48,6 +48,40 @@ function CommentCard({ comment, onVote, canVote, onDelete, onReport, children })
   )
 }
 
+/**
+ * What the record shows about a thread: whether an author answered it, and, once
+ * a revision exists, whether the passage it quotes is still there.
+ *
+ * No resolved/unresolved verdict is asserted. Traditional peer review surfaces a
+ * criticism and a response and lets the reader judge; the one thing it cannot do
+ * is verify "we have revised the text accordingly", which the anchoring already
+ * knows for free.
+ */
+function ThreadState({ comment, docVersion, resolution }) {
+  if (comment.by_author || comment.deleted) return null
+  const superseded = comment.version < docVersion
+  const revised = superseded && resolution?.pin
+  return (
+    <div className="threadstate">
+      <span className={comment.answered ? 'answered' : 'unanswered'}>
+        {comment.answered ? 'Answered by an author' : 'Awaiting author response'}
+      </span>
+      {superseded && (
+        <span
+          className="muted"
+          title={
+            revised
+              ? `The quoted passage is no longer in v${docVersion}`
+              : `The quoted passage is unchanged in v${docVersion}`
+          }
+        >
+          {revised ? `passage revised in v${docVersion}` : `passage unchanged in v${docVersion}`}
+        </span>
+      )}
+    </div>
+  )
+}
+
 export default function CommentThread({ comment, docVersion, resolution, active, onVote, onPost, onFocus, onDelete, onReport }) {
   const { me } = useMe()
   const location = useLocation()
@@ -79,6 +113,7 @@ export default function CommentThread({ comment, docVersion, resolution, active,
           </span>
         </blockquote>
       )}
+      <ThreadState comment={comment} docVersion={docVersion} resolution={resolution} />
       <CommentCard comment={comment} onVote={onVote} canVote={loggedIn} onDelete={onDelete} onReport={onReport}>
         {loggedIn ? (
           <button className="linkbtn" onClick={() => setReplying(!replying)}>Reply</button>
