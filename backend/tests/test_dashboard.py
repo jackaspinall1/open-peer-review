@@ -105,3 +105,56 @@ def test_an_authors_own_thread_is_not_marked_awaiting(client):
     comment(client, doc, "a note from the author")
     thread = client.get(f"/api/documents/{doc}").json()["comments"][0]
     assert thread["by_author"] is True and thread["answered"] is False
+
+
+def test_standing_is_shown_before_commenting_and_costs_no_alias_number(client):
+    """A reader can see how they will be labelled without having commented.
+
+    The pseudonym is assigned on first comment, not on first look: handing
+    numbers to silent viewers would waste them and let gaps in the sequence hint
+    at how many people opened the paper.
+    """
+    from app.db import SessionLocal
+    from app.models import ReviewerAlias
+
+    login(client, AUTHOR)
+    doc = make_document(client, authors=[{"name": "Ada", "orcid": AUTHOR}])
+    login(client, REVIEWER)
+    standing = client.get(f"/api/documents/{doc}/my-relationship").json()
+    assert standing["has_commented"] is False
+    assert standing["alias"] == "a numbered reviewer"
+
+    db = SessionLocal()
+    rel = db.query(ReviewerAlias).filter(ReviewerAlias.document_id == doc).one()
+    assert rel.alias_number is None      # looked, but said nothing
+    db.close()
+
+    comment(client, doc, "now I have something to say")
+    after = client.get(f"/api/documents/{doc}/my-relationship").json()
+    assert after["has_commented"] is True
+    assert after["alias"] == "Reviewer 1"
+
+
+def test_a_listed_author_sees_the_author_label_before_commenting(client):
+    login(client, AUTHOR)
+    doc = make_document(client, authors=[{"name": "Ada", "orcid": AUTHOR}])
+    assert client.get(f"/api/documents/{doc}/my-relationship").json()["alias"] == "Author"
+
+
+def test_silent_viewers_do_not_consume_reviewer_numbers(client):
+    """Two people look, one comments: they are Reviewer 1, not Reviewer 3."""
+    login(client, AUTHOR)
+    doc = make_document(client, authors=[{"name": "Ada", "orcid": AUTHOR}])
+    for who in (REVIEWER, BYSTANDER := "0000-0002-0000-0004"):
+        login(client, who)
+        client.get(f"/api/documents/{doc}/my-relationship")
+    login(client, "0000-0002-0000-0005")
+    body = comment(client, doc, "the first actual comment")
+    assert body["comments"][0]["alias"] == "Reviewer 1"
+
+
+def test_standing_requires_login(client):
+    login(client, AUTHOR)
+    doc = make_document(client)
+    client.post("/auth/logout")
+    assert client.get(f"/api/documents/{doc}/my-relationship").status_code == 401

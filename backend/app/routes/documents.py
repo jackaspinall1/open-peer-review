@@ -301,6 +301,36 @@ def get_document(
     return full_document(db, doc, user)
 
 
+@router.get("/{doc_id}/my-relationship")
+def my_relationship(
+    doc_id: int,
+    background: BackgroundTasks,
+    user: User = Depends(require_user),
+    db: Session = Depends(get_db),
+):
+    """The badges this user's comment would carry, shown before they write one.
+
+    People should know how they will be labelled before deciding what to say,
+    and an author seeing "co-author relationship found" for the first time
+    underneath their own posted comment is a bad way to learn how this works.
+    """
+    doc = db.get(Document, doc_id)
+    if doc is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+    rel = coi.get_or_create_relationship(db, doc, user)
+    if rel.coi_status == "pending" or rel.expertise_level == "pending":
+        background.add_task(coi.compute_alias_badges, doc.id, user.id)
+    return {
+        "coi": {"status": rel.coi_status, "detail": rel.coi_detail},
+        "expertise": {"level": rel.expertise_level, "detail": rel.expertise_detail},
+        # The number itself is only fixed at the moment of commenting.
+        "alias": "Author" if rel.coi_status == "author" else (
+            f"Reviewer {rel.alias_number}" if rel.alias_number else "a numbered reviewer"
+        ),
+        "has_commented": rel.alias_number is not None,
+    }
+
+
 @router.get("/{doc_id}/pdf")
 def get_pdf(doc_id: int, db: Session = Depends(get_db)):
     doc = db.get(Document, doc_id)

@@ -79,7 +79,11 @@ class ReviewerAlias(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     document_id: Mapped[int] = mapped_column(ForeignKey("documents.id", ondelete="CASCADE"))
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
-    alias_number: Mapped[int] = mapped_column(Integer)
+    # Assigned on the user's first comment, not when the relationship is first
+    # computed: a badge can be shown to someone before they have said anything,
+    # and handing out numbers to silent viewers would both waste them and let
+    # gaps in the sequence hint at how many people looked.
+    alias_number: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     # author | coauthor | none | unverifiable | pending
     coi_status: Mapped[str] = mapped_column(String(20), default="pending")
     coi_detail: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)

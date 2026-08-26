@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { useMe } from '../auth'
 import { del, get, postForm, postJSON } from '../api'
 import PdfViewer from '../pdf/PdfViewer'
 import SelectionPopover from '../pdf/SelectionPopover'
@@ -14,6 +15,7 @@ function licenceLabel(code) {
 
 export default function ViewerPage() {
   const { id } = useParams()
+  const { me } = useMe()
   const [doc, setDoc] = useState(null)
   const [error, setError] = useState(null)
   const [toast, setToast] = useState(null)
@@ -21,6 +23,7 @@ export default function ViewerPage() {
   const [draft, setDraft] = useState(null) // {anchor} or {anchor: null} for general comment
   const [activeId, setActiveId] = useState(null)
   const [resolutions, setResolutions] = useState({})
+  const [standing, setStanding] = useState(null)
 
   useEffect(() => {
     get(`/api/documents/${id}`).then(setDoc).catch((e) => setError(e.message))
@@ -68,6 +71,25 @@ export default function ViewerPage() {
       setToast(e.message)
     }
   }
+
+  // The badges a comment from this reader would carry. Re-checked shortly after
+  // arriving because the relationship is computed off the request path.
+  useEffect(() => {
+    if (!me?.logged_in) { setStanding(null); return }
+    let cancelled = false
+    const load = () => get(`/api/documents/${id}/my-relationship`).then((r) => {
+      if (cancelled) return r
+      setStanding(r)
+      return r
+    })
+    load().then((r) => {
+      if (!cancelled && (r.coi.status === 'pending' || r.expertise.level === 'pending')) {
+        const t = setTimeout(load, 4000)
+        return () => clearTimeout(t)
+      }
+    }).catch(() => {})
+    return () => { cancelled = true }
+  }, [id, me?.orcid, me?.logged_in])
 
   useEffect(() => {
     if (!toast) return
@@ -212,6 +234,7 @@ export default function ViewerPage() {
           docVersion={doc.version}
           round={doc.round}
           canManage={doc.can_manage}
+          standing={standing}
           resolutions={resolutions}
           draft={draft}
           activeId={activeId}

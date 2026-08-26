@@ -75,6 +75,11 @@ re-attaches; revised text surfaces as unresolved).
 
 ## Trust & identity
 
+- [x] Show a reader the badges their comment would carry, before they write it.
+      Alias numbers are now assigned on first comment rather than first view,
+      so silent viewers neither consume numbers nor reveal their presence
+      through gaps in the sequence
+
 - [x] One live discussion per paper: dedupe on OpenAlex work id, then
       version-stripped DOI. Paper control belongs to any listed author by
       ORCID, not just the depositor (otherwise a non-author can squat a paper)

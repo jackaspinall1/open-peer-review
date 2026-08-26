@@ -69,7 +69,7 @@ def comment_tree(db: Session, doc: Document, me: Optional[User]) -> list[dict]:
             "alias": (
                 "Author"
                 if alias and alias.coi_status == "author"
-                else f"Reviewer {alias.alias_number}" if alias else "Reviewer ?"
+                else f"Reviewer {alias.alias_number}" if alias and alias.alias_number else "Reviewer ?"
             ),
             "coi": {
                 "status": alias.coi_status if alias else "pending",

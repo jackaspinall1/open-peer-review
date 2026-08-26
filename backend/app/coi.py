@@ -311,28 +311,44 @@ def compute_alias_badges(document_id: int, user_id: int) -> None:
         db.close()
 
 
-def get_or_create_alias(db: Session, document: Document, user: User) -> ReviewerAlias:
+def get_or_create_relationship(db: Session, document: Document, user: User) -> ReviewerAlias:
+    """This user's standing on this paper, with no alias number yet.
+
+    Exists so a badge can be shown to someone before they comment: the
+    relationship is a property of (person, paper), while the pseudonym is only
+    needed once they speak.
+    """
     alias = (
         db.query(ReviewerAlias)
         .filter(ReviewerAlias.document_id == document.id, ReviewerAlias.user_id == user.id)
         .one_or_none()
     )
-    if alias is not None:
-        return alias
-    next_number = (
-        db.query(func.coalesce(func.max(ReviewerAlias.alias_number), 0))
-        .filter(ReviewerAlias.document_id == document.id)
-        .scalar()
-    ) + 1
-    alias = ReviewerAlias(
-        document_id=document.id,
-        user_id=user.id,
-        alias_number=next_number,
-        coi_status="pending",
-        expertise_level="pending",
-    )
-    db.add(alias)
-    db.commit()
+    if alias is None:
+        # Authorship is a list comparison with no network cost, so settle it now
+        # rather than showing an author "checking..." and then "Author".
+        is_author = _norm(user.orcid) in {_norm(a.orcid) for a in document.authors if a.orcid}
+        alias = ReviewerAlias(
+            document_id=document.id,
+            user_id=user.id,
+            coi_status="author" if is_author else "pending",
+            coi_detail="Commenter is a listed author" if is_author else None,
+            expertise_level="pending",
+        )
+        db.add(alias)
+        db.commit()
+    return alias
+
+
+def get_or_create_alias(db: Session, document: Document, user: User) -> ReviewerAlias:
+    """As above, but also assigns the pseudonym, for someone about to comment."""
+    alias = get_or_create_relationship(db, document, user)
+    if alias.alias_number is None:
+        alias.alias_number = (
+            db.query(func.coalesce(func.max(ReviewerAlias.alias_number), 0))
+            .filter(ReviewerAlias.document_id == document.id)
+            .scalar()
+        ) + 1
+        db.commit()
     return alias
 
 

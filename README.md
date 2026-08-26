@@ -109,6 +109,22 @@ the whole system.
   behind the word "reviewed", and the author is nudged in the comment sidebar to
   go and ask people when the window is closing quietly.
 
+## Knowing how you will appear
+
+Above the comments, a signed-in reader sees the labels their own comment would
+carry: their pseudonym or "Author", their conflict-of-interest badge and their
+expertise badge. People should know how they will be presented before deciding
+what to say, and finding out you are flagged as a co-author underneath a comment
+you have already posted is a poor way to learn how this works.
+
+The pseudonym itself is assigned on a person's first comment rather than their
+first visit. Handing numbers to silent viewers would waste them and, worse, let
+gaps in the sequence hint at how many people had opened the paper.
+
+Authorship is settled immediately since it is only a comparison against the
+author list; the co-authorship and expertise lookups resolve a moment later,
+with the panel showing that it is checking meanwhile.
+
 ## Notifications
 
 A reply to your comment raises a notification, shown as a count beside your name

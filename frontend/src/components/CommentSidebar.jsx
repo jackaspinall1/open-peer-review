@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useMe } from '../auth'
 import CommentThread from './CommentThread'
+import YourStanding from './YourStanding'
 
 function DraftCard({ draft, onPost, onCancel }) {
   const { me } = useMe()
@@ -62,13 +63,14 @@ function DraftCard({ draft, onPost, onCancel }) {
   )
 }
 
-export default function CommentSidebar({ comments, docVersion, round, canManage, resolutions, draft, activeId, onPost, onCancelDraft, onVote, onFocus, onStartGeneral, onDelete, onReport }) {
+export default function CommentSidebar({ comments, docVersion, round, canManage, standing, resolutions, draft, activeId, onPost, onCancelDraft, onVote, onFocus, onStartGeneral, onDelete, onReport }) {
   return (
     <aside className="sidebar">
       <div className="sidebarhead">
         <h2>Comments ({comments.reduce((n, c) => n + 1 + c.replies.length, 0)})</h2>
         {!draft && <button className="linkbtn" onClick={onStartGeneral}>+ General comment</button>}
       </div>
+      <YourStanding standing={standing} />
       {draft && <DraftCard draft={draft} onPost={onPost} onCancel={onCancelDraft} />}
       {comments.length === 0 && !draft && (
         <p className="muted sidebarhint">
