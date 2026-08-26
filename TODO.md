@@ -50,8 +50,11 @@ re-attaches; revised text surfaces as unresolved).
 - [x] Republish repo publicly (AGPL)
 - [x] Real SECRET_KEY; no hardcoded default (a known key in a public repo lets
       anyone forge a session for any ORCID iD)
-- [ ] Deploy a hosted instance (Fly.io/Render, SQLite on a volume); add the
-      deployed callback URI to the ORCID client (fields are editable)
+- [x] Production packaging: single container, FastAPI serves the built
+      frontend, Dockerfile + fly.toml written and the single-process mode
+      verified locally
+- [ ] Actually deploy it (needs a Fly account, a GoDaddy DNS record, and the
+      new callback URI on the ORCID client)
 - [ ] OG meta tags so shared paper links unfurl on X/Bluesky/Slack with
       title/authors/comment count — the link is the ad
 - [ ] Decide upload policy deliberately: author-initiated only (uploader's

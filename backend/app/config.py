@@ -70,5 +70,10 @@ ADMIN_ORCIDS = {
 # OpenAlex asks for a mailto to route you into the polite (faster) request pool.
 OPENALEX_MAILTO = os.environ.get("OPENALEX_MAILTO", "")
 
+# Built frontend, served by this app in production. In development the Vite dev
+# server serves it instead and proxies /api and /auth here.
+STATIC_DIR = Path(os.environ.get("STATIC_DIR", PROJECT_ROOT / "frontend" / "dist"))
+
+
 def ensure_dirs() -> None:
     PDF_DIR.mkdir(parents=True, exist_ok=True)

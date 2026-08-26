@@ -1,0 +1,26 @@
+# fly.io deployment. Create with:  flyctl launch --no-deploy --name <app>
+app = "open-peer-review"
+primary_region = "lhr"
+
+[build]
+
+[env]
+  DATA_DIR = "/data"
+  STATIC_DIR = "/app/static"
+  AUTH_MODE = "orcid"
+  ORCID_ENV = "production"
+
+[[mounts]]
+  source = "review_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

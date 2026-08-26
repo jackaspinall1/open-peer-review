@@ -243,6 +243,35 @@ cd backend
   --author "Jane Doe:0000-0002-1825-0097" --author "John Smith"
 ```
 
+## Deployment
+
+The app builds into a single container: FastAPI serves the built frontend
+alongside the API, so there is one process, one thing to deploy, and no
+cross-origin cookie handling. It cannot be hosted as a static site, because the
+comments need shared storage and the ORCID token exchange needs a server-side
+client secret.
+
+It needs a persistent disk. `DATA_DIR` holds the SQLite database and the PDFs,
+so without a mounted volume every deploy discards the reviews.
+
+```bash
+fly auth login
+fly launch --no-deploy --name <app-name>          # fly.toml is already written
+fly volumes create review_data --size 1 --region lhr
+fly secrets set \
+  SECRET_KEY="$(python3 -c 'import secrets; print(secrets.token_urlsafe(48))')" \
+  ORCID_CLIENT_ID=APP-XXXX ORCID_CLIENT_SECRET=xxxx \
+  ORCID_REDIRECT_URI=https://<your-domain>/auth/orcid/callback \
+  FRONTEND_URL=https://<your-domain> \
+  ADMIN_ORCIDS=0000-0000-0000-0000 \
+  OPENALEX_MAILTO=you@example.com
+fly deploy
+fly certs add <your-domain>                        # then add the DNS records it prints
+```
+
+Finally add `https://<your-domain>/auth/orcid/callback` as a redirect URI on the
+ORCID client, at which point the login flow no longer needs a bounce page.
+
 ## Tests
 
 ```bash
