@@ -1,7 +1,7 @@
 :root {
   --ink: #1e2126;
   --muted: #6b7280;
-  --paper: #f5f4f1;
+  --paper: #f2f3ef;
   --card: #ffffff;
   --line: #e2e0da;
   --accent: #1a5fb4;
@@ -96,7 +96,7 @@ h2 { font-size: 16px; margin: 0; }
   background: var(--card); border-bottom: 1px solid var(--line);
 }
 .roundbar.open { background: #eef4fb; border-bottom-color: #cfe0f4; }
-.roundbar.closed { background: #f4f3f0; }
+.roundbar.closed { background: #eceee8; }
 .nudge { color: #8a6d0b; background: #fdf3d7; padding: 3px 10px; border-radius: 10px; }
 .latemark {
   font-size: 11px; color: var(--muted);
