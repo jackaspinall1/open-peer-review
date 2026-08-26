@@ -14,7 +14,11 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  /* Neue-grotesque stack. Helvetica where it exists (macOS), Arial and Liberation
+     Sans as metric-compatible fallbacks elsewhere. No webfont on purpose: a
+     hosted font would add a third-party request to every page load, which is
+     both a privacy leak and an availability dependency. */
+  font-family: "Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif;
   color: var(--ink);
   background: var(--paper);
 }
@@ -27,7 +31,7 @@ body {
   padding: 0 20px; height: 52px; flex: none;
   background: var(--card); border-bottom: 1px solid var(--line);
 }
-.brand { font-weight: 700; font-size: 17px; color: var(--ink); text-decoration: none; }
+.brand { font-weight: 700; font-size: 17px; letter-spacing: -0.015em; color: var(--ink); text-decoration: none; }
 .topbar nav { display: flex; align-items: center; gap: 18px; }
 .navlink { color: var(--accent); text-decoration: none; font-size: 14px; }
 .navlink:hover { text-decoration: underline; }
@@ -37,7 +41,7 @@ body {
 /* ---------- generic ---------- */
 .page { max-width: 900px; margin: 0 auto; padding: 32px 20px; overflow-y: auto; width: 100%; }
 .page.narrow { max-width: 560px; }
-h1 { font-size: 24px; margin: 0 0 16px; }
+h1 { font-size: 24px; margin: 0 0 16px; letter-spacing: -0.015em; }
 h2 { font-size: 16px; margin: 0; }
 .muted { color: var(--muted); }
 .error { color: #b3261e; font-size: 14px; }
