@@ -10,7 +10,7 @@ from ..coi import compute_alias_badges, get_or_create_alias
 from ..rounds import open_round_for
 from ..db import get_db
 from .. import config
-from ..models import Comment, Document, Report, User, Vote
+from ..models import Comment, Document, Notification, Report, User, Vote
 from ..serialize import comment_tree
 
 router = APIRouter(prefix="/api")
@@ -87,6 +87,16 @@ def create_comment(
         round_id=(lambda r: r.id if r else None)(open_round_for(db, doc)),
     )
     db.add(comment)
+    db.flush()
+    if payload.parent_id is not None:
+        parent = db.get(Comment, payload.parent_id)
+        if parent is not None and parent.user_id != user.id:
+            db.add(Notification(
+                user_id=parent.user_id,
+                document_id=doc.id,
+                comment_id=comment.id,
+                parent_comment_id=parent.id,
+            ))
     db.commit()
     return {"id": comment.id, "comments": comment_tree(db, doc, user)}
 
@@ -208,3 +218,63 @@ def list_reports(user: User = Depends(require_user), db: Session = Depends(get_d
             "reported_at": r.created_at.isoformat(),
         })
     return {"reports": out}
+
+
+@router.get("/notifications")
+def list_notifications(user: User = Depends(require_user), db: Session = Depends(get_db)):
+    """Replies to this user's comments, newest first.
+
+    Shows the reply under its per-document alias like everywhere else, so being
+    notified reveals nothing that the page does not already show.
+    """
+    from ..models import Document as Doc
+    from ..serialize import comment_tree
+
+    rows = (
+        db.query(Notification)
+        .filter(Notification.user_id == user.id)
+        .order_by(Notification.created_at.desc())
+        .limit(50)
+        .all()
+    )
+    aliases = {}
+    out = []
+    for n in rows:
+        reply, mine, doc = db.get(Comment, n.comment_id), db.get(Comment, n.parent_comment_id), db.get(Doc, n.document_id)
+        if reply is None or mine is None or doc is None:
+            continue
+        if doc.id not in aliases:
+            aliases[doc.id] = {c["id"]: c for c in _flatten(comment_tree(db, doc, user))}
+        shaped = aliases[doc.id].get(reply.id, {})
+        out.append({
+            "id": n.id,
+            "document_id": doc.id,
+            "document_title": doc.title,
+            "comment_id": reply.id,
+            "your_comment": mine.body[:140],
+            "reply": reply.body[:280] if not reply.deleted else "[deleted]",
+            "reply_alias": shaped.get("alias", "Reviewer ?"),
+            "by_author": shaped.get("by_author", False),
+            "read": n.read_at is not None,
+            "created_at": n.created_at.isoformat(),
+        })
+    return {"notifications": out, "unread": sum(1 for n in out if not n["read"])}
+
+
+def _flatten(tree: list[dict]) -> list[dict]:
+    out = []
+    for c in tree:
+        out.append(c)
+        out.extend(c.get("replies", []))
+    return out
+
+
+@router.post("/notifications/read")
+def mark_notifications_read(user: User = Depends(require_user), db: Session = Depends(get_db)):
+    from ..models import utcnow
+
+    db.query(Notification).filter(
+        Notification.user_id == user.id, Notification.read_at.is_(None)
+    ).update({Notification.read_at: utcnow()}, synchronize_session=False)
+    db.commit()
+    return {"unread": 0}

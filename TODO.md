@@ -110,6 +110,11 @@ re-attaches; revised text surfaces as unresolved).
 
 ## Review mechanics
 
+- [x] Notify a reviewer in-app when their comment is replied to (count beside
+      the name, list on their own page)
+- [ ] Email notification would reach reviewers who do not return, but needs an
+      optional address collected at sign-in: ORCID gives us none
+
 - [x] Author page (/me): papers matched by ORCID, under review vs past, window
       timeline, comment counts and how many await an author reply
 - [x] Thread state: "Awaiting author response" / "Answered by an author", plus

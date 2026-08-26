@@ -12,11 +12,14 @@ from conftest import comment, login, make_document
 REAL_NAME = "Ada Lovelace"
 ORCID_A = "0000-0002-1825-0097"
 ORCID_B = "0000-0001-5109-3700"
+ORCID_AUTHOR = "0000-0002-0000-0007"   # the paper's author, neither commenter
 
 
 def test_public_payload_never_contains_identity(client):
+    # The paper is by someone else entirely, so both commenters are reviewers
+    # rather than authors and should be pseudonymous.
     login(client, ORCID_A)
-    doc = make_document(client, authors=[{"name": "Grace Hopper", "orcid": ORCID_B}])
+    doc = make_document(client, authors=[{"name": "Grace Hopper", "orcid": ORCID_AUTHOR}])
     comment(client, doc, "A critical observation")
     login(client, ORCID_B)
     comment(client, doc, "A second view")

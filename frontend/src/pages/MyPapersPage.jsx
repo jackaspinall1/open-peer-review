@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { get } from '../api'
+import { get, postJSON } from '../api'
 import { useMe } from '../auth'
 import RoundStatus from '../components/RoundStatus'
 
@@ -52,14 +52,22 @@ function PaperRow({ p, past }) {
 }
 
 export default function MyPapersPage() {
-  const { me } = useMe()
+  const { me, refreshUnread } = useMe()
   const [data, setData] = useState(null)
+  const [notes, setNotes] = useState(null)
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    if (!me?.logged_in) return
+    if (!me?.orcid) return
     get('/api/documents/mine').then(setData).catch((e) => setError(e.message))
-  }, [me?.logged_in])
+    get('/api/notifications')
+      .then((r) => {
+        setNotes(r.notifications)
+        // seen once the list is open; the badge should not nag afterwards
+        if (r.unread > 0) postJSON('/api/notifications/read', {}).then(refreshUnread)
+      })
+      .catch(() => setNotes([]))
+  }, [me?.orcid, refreshUnread])
 
   if (me && !me.logged_in) {
     return <main className="page"><p className="muted">Sign in to see your papers.</p></main>
@@ -71,6 +79,26 @@ export default function MyPapersPage() {
     <main className="page">
       <h1>Your papers</h1>
       <p className="muted" title={me?.orcid}>Papers you are listed on, matched by ORCID iD.</p>
+
+      {notes?.length > 0 && (
+        <>
+          <h2 className="sectionhead">Replies to your comments</h2>
+          <ul className="doclist">
+            {notes.map((n) => (
+              <li key={n.id} className={n.read ? 'doccard' : 'doccard unread'}>
+                <Link to={`/doc/${n.document_id}#comment-${n.comment_id}`} className="doctitle">
+                  {n.document_title}
+                </Link>
+                <blockquote className="quote">{n.your_comment}</blockquote>
+                <div className="metrics">
+                  <span><strong>{n.reply_alias}</strong>{n.by_author ? ' (author)' : ''} replied:</span>
+                </div>
+                <p className="commentbody">{n.reply}</p>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
 
       <h2 className="sectionhead">Under review</h2>
       {data.under_review.length === 0 ? (

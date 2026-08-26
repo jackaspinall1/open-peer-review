@@ -22,7 +22,15 @@ PDF = b"%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\
 @pytest.fixture(autouse=True)
 def no_network(monkeypatch):
     """Tests must not depend on OpenAlex/ORCID being reachable."""
-    monkeypatch.setattr(coi, "compute_coi", lambda user, doc: ("none", "No co-authorship found"))
+    def fake_coi(user, doc):
+        # Faithful to the real rule for the one case that has no network cost:
+        # an ORCID on the author list is an author. Everything else reads as no
+        # relationship, since the graph lookups are what we are avoiding here.
+        if user.orcid in {a.orcid for a in doc.authors if a.orcid}:
+            return ("author", "Commenter is a listed author")
+        return ("none", "No co-authorship found")
+
+    monkeypatch.setattr(coi, "compute_coi", fake_coi)
     monkeypatch.setattr(coi, "classify_document", lambda doc: [])
     monkeypatch.setattr(coi, "compute_expertise", lambda user, topics: ("none", "No record"))
     monkeypatch.setattr(coi, "refresh_pending", lambda db, doc: None)

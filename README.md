@@ -109,6 +109,18 @@ the whole system.
   behind the word "reviewed", and the author is nudged in the comment sidebar to
   go and ask people when the window is closing quietly.
 
+## Notifications
+
+A reply to your comment raises a notification, shown as a count beside your name
+and listed on your own page with the reply and a link back to the thread.
+
+These are **in-app only**, and that is a real limitation rather than an
+oversight: the ORCID `/authenticate` scope returns an iD and a name and no email
+address, and ORCID addresses are usually private, so there is nowhere to send a
+message. A reviewer learns of a response when they next visit. Reaching people
+who do not return would mean collecting an email address separately, with the
+privacy obligations that brings.
+
 ## The author's page
 
 Clicking your name opens your own papers, matched by ORCID rather than by who

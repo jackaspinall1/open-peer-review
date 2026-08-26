@@ -38,6 +38,12 @@ body {
 .userbox { display: flex; align-items: center; gap: 10px; font-size: 14px; }
 .username { font-weight: 600; color: var(--ink); text-decoration: none; }
 .username:hover { color: var(--accent); }
+.unreaddot {
+  display: inline-block; margin-left: 6px; min-width: 17px; padding: 0 5px;
+  background: var(--accent); color: #fff; border-radius: 9px;
+  font-size: 11px; line-height: 17px; text-align: center; font-weight: 700;
+}
+.doccard.unread { border-left: 3px solid var(--accent); }
 
 /* ---------- generic ---------- */
 .page { max-width: 900px; margin: 0 auto; padding: 32px 20px; overflow-y: auto; width: 100%; }

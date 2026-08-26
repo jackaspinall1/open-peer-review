@@ -7,7 +7,7 @@ import LoginPage from './pages/LoginPage'
 import MyPapersPage from './pages/MyPapersPage'
 
 export default function App() {
-  const { me, logout } = useMe()
+  const { me, logout, unread } = useMe()
   const navigate = useNavigate()
 
   return (
@@ -18,7 +18,10 @@ export default function App() {
           <Link to="/upload" className="navlink">Upload paper</Link>
           {me?.logged_in ? (
             <span className="userbox">
-              <Link to="/me" className="username" title="Your papers">{me.name}</Link>
+              <Link to="/me" className="username" title="Your papers and replies">
+                {me.name}
+                {unread > 0 && <span className="unreaddot" title={`${unread} new repl${unread === 1 ? 'y' : 'ies'}`}>{unread}</span>}
+              </Link>
               <button className="linkbtn" onClick={() => logout().then(() => navigate('/'))}>Sign out</button>
             </span>
           ) : (

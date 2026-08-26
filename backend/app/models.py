@@ -148,6 +148,25 @@ class Report(Base):
     resolved: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
+class Notification(Base):
+    """Tells a reviewer that someone replied to their comment.
+
+    In-app only. The ORCID /authenticate scope returns an iD and a name and no
+    email address, so there is nowhere to send a message; this reaches people
+    when they next visit. Email would need an address collected separately.
+    """
+
+    __tablename__ = "notifications"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    document_id: Mapped[int] = mapped_column(ForeignKey("documents.id", ondelete="CASCADE"))
+    comment_id: Mapped[int] = mapped_column(ForeignKey("comments.id", ondelete="CASCADE"))
+    parent_comment_id: Mapped[int] = mapped_column(ForeignKey("comments.id", ondelete="CASCADE"))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    read_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+
 class Vote(Base):
     __tablename__ = "votes"
     __table_args__ = (UniqueConstraint("comment_id", "user_id"),)
