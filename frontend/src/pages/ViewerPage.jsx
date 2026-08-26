@@ -4,7 +4,7 @@ import { del, get, postForm, postJSON } from '../api'
 import PdfViewer from '../pdf/PdfViewer'
 import SelectionPopover from '../pdf/SelectionPopover'
 import CommentSidebar from '../components/CommentSidebar'
-import RoundBar from '../components/RoundBar'
+import RoundStatus from '../components/RoundStatus'
 
 /** Human-readable licence, e.g. "cc-by-nc-nd" -> "CC BY-NC-ND". */
 function licenceLabel(code) {
@@ -165,8 +165,21 @@ export default function ViewerPage() {
                 Original on {doc.source_name || 'the preprint server'} ↗
               </a>
             )}
+            <RoundStatus round={doc.round} />
           </div>
         </div>
+        {doc.can_manage && !doc.round?.open && (
+          <button className="linkbtn revisionbtn" disabled={roundBusy}
+            onClick={() => roundAction('rounds', 'Review window open for 14 days. Now go and ask people.')}>
+            {doc.round ? 'Open a new round' : 'Open review'}
+          </button>
+        )}
+        {doc.can_manage && doc.round?.open && doc.round.extendable && (
+          <button className="linkbtn revisionbtn" disabled={roundBusy}
+            onClick={() => roundAction('rounds/extend', 'Extended by a week.')}>
+            Extend by a week
+          </button>
+        )}
         {doc.can_manage && doc.has_source && (
           <button className="linkbtn revisionbtn" onClick={checkSource}>
             Check for new version
@@ -184,13 +197,6 @@ export default function ViewerPage() {
           </label>
         )}
       </div>
-      <RoundBar
-        round={doc.round}
-        isAuthor={doc.can_manage}
-        busy={roundBusy}
-        onOpen={() => roundAction('rounds', 'Review window open for 14 days. Now go and ask people.')}
-        onExtend={() => roundAction('rounds/extend', 'Extended by a week.')}
-      />
       <div className="viewerbody">
         <PdfViewer
           url={`/api/documents/${id}/pdf?v=${doc.version}`}
@@ -204,6 +210,8 @@ export default function ViewerPage() {
         <CommentSidebar
           comments={doc.comments}
           docVersion={doc.version}
+          round={doc.round}
+          canManage={doc.can_manage}
           resolutions={resolutions}
           draft={draft}
           activeId={activeId}

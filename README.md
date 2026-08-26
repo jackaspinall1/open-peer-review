@@ -102,10 +102,12 @@ the whole system.
   still accepted, marked "after the window", and excluded from the round's
   counts. Losing a correct criticism to a deadline would be exactly the kind of
   dysfunction that checks are meant to prevent.
-- The round is displayed with its dates, extensions and participation, so a thin
-  round reads as thin instead of hiding behind the word "reviewed". A countdown
-  is public, because urgency nobody can see motivates nobody, and the author is
-  nudged to go and ask people when the window is closing quietly.
+- A timeline and countdown sit in the paper's metadata line, next to the link
+  to the original, so the deadline is visible to everyone without a banner:
+  urgency nobody can see motivates nobody. The tooltip carries the dates,
+  extensions and participation, so a thin round reads as thin instead of hiding
+  behind the word "reviewed", and the author is nudged in the comment sidebar to
+  go and ask people when the window is closing quietly.
 
 ## Moderation
 

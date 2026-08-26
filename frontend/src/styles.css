@@ -94,14 +94,19 @@ h2 { font-size: 16px; margin: 0; }
 .worktitle { display: block; font-size: 14px; font-weight: 600; }
 .workmeta { display: block; font-size: 12.5px; color: var(--muted); margin-top: 2px; }
 
-.roundbar {
-  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-  padding: 9px 20px; font-size: 13px;
-  background: var(--card); border-bottom: 1px solid var(--line);
+.roundstatus { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+.roundstatus .urgent { color: #a12b22; font-weight: 600; }
+.roundstatus.closed { color: var(--muted); }
+.timeline {
+  display: inline-block; width: 64px; height: 4px; border-radius: 2px;
+  background: var(--line); overflow: hidden; vertical-align: middle;
 }
-.roundbar.open { background: #eef4fb; border-bottom-color: #cfe0f4; }
-.roundbar.closed { background: #eceee8; }
-.nudge { color: #8a6d0b; background: #fdf3d7; padding: 3px 10px; border-radius: 10px; }
+.timeline-fill { display: block; height: 100%; background: var(--accent); }
+.roundstatus.closed .timeline-fill { background: var(--muted); }
+.nudge {
+  color: #8a6d0b; background: #fdf3d7; font-size: 12.5px;
+  padding: 8px 10px; border-radius: 6px; margin: 0 0 12px;
+}
 .latemark {
   font-size: 11px; color: var(--muted);
   background: #ececec; padding: 1px 7px; border-radius: 9px;

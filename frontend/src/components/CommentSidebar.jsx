@@ -62,7 +62,7 @@ function DraftCard({ draft, onPost, onCancel }) {
   )
 }
 
-export default function CommentSidebar({ comments, docVersion, resolutions, draft, activeId, onPost, onCancelDraft, onVote, onFocus, onStartGeneral, onDelete, onReport }) {
+export default function CommentSidebar({ comments, docVersion, round, canManage, resolutions, draft, activeId, onPost, onCancelDraft, onVote, onFocus, onStartGeneral, onDelete, onReport }) {
   return (
     <aside className="sidebar">
       <div className="sidebarhead">
@@ -73,6 +73,13 @@ export default function CommentSidebar({ comments, docVersion, resolutions, draf
       {comments.length === 0 && !draft && (
         <p className="muted sidebarhint">
           Select a sentence in the paper to leave the first comment.
+        </p>
+      )}
+      {canManage && round?.open && round.days_left <= 3 && round.reviewer_count < 2 && (
+        <p className="nudge">
+          Your review window closes in {round.days_left} day{round.days_left === 1 ? '' : 's'} and
+          few people have commented. Messaging three colleagues directly is the most effective
+          thing you can do now.
         </p>
       )}
       {comments.length > 0 && (
