@@ -36,7 +36,8 @@ body {
 .navlink { color: var(--accent); text-decoration: none; font-size: 14px; }
 .navlink:hover { text-decoration: underline; }
 .userbox { display: flex; align-items: center; gap: 10px; font-size: 14px; }
-.username { font-weight: 600; }
+.username { font-weight: 600; color: var(--ink); text-decoration: none; }
+.username:hover { color: var(--accent); }
 
 /* ---------- generic ---------- */
 .page { max-width: 900px; margin: 0 auto; padding: 32px 20px; overflow-y: auto; width: 100%; }
@@ -81,6 +82,9 @@ h2 { font-size: 16px; margin: 0; }
 .doctitle:hover { color: var(--accent); }
 .docmeta { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 6px; font-size: 13px; color: var(--muted); }
 .count { font-weight: 600; color: var(--accent); }
+.sectionhead { font-size: 15px; margin: 26px 0 10px; }
+.metrics { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; font-size: 13px; }
+.metrics .awaiting { color: #8a6d0b; }
 .licence { font-weight: 600; }
 .sourcelink { color: var(--accent); text-decoration: none; }
 .sourcelink:hover { text-decoration: underline; }

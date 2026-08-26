@@ -57,6 +57,13 @@ def resolve_metadata(payload: ResolveIn, user: User = Depends(require_user)):
     return metadata.resolve(payload.title, payload.doi)
 
 
+@router.get("/mine")
+def my_papers(user: User = Depends(require_user), db: Session = Depends(get_db)):
+    from ..dashboard import my_papers as _my_papers
+
+    return _my_papers(db, user)
+
+
 @router.get("/my-works")
 def my_works(user: User = Depends(require_user)):
     try:

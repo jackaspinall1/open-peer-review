@@ -109,6 +109,29 @@ the whole system.
   behind the word "reviewed", and the author is nudged in the comment sidebar to
   go and ask people when the window is closing quietly.
 
+## The author's page
+
+Clicking your name opens your own papers, matched by ORCID rather than by who
+uploaded them, split into those under review and those whose window has closed.
+Past entries link to the final version on the preprint server and, once round
+deposits exist, to the citable review record.
+
+The counts are limited to what the server can actually know, which is worth
+stating because the obvious metric is missing. Whether a criticism was
+*resolved* cannot be computed server-side: anchoring runs in the browser, so
+only the client can tell whether a quoted passage still exists in the current
+version. Rather than invent that number, the page reports three facts:
+
+| Metric | Meaning |
+|---|---|
+| comments | how much scrutiny the paper has drawn |
+| awaiting your response | top-level comments no author has replied to |
+| on an earlier version | comments written before the current revision, so a revision may already have dealt with them |
+
+The last is a hint, not a claim. A real resolved/unresolved state needs the
+comment typing and state vector in TODO.md, and the client reporting whether an
+anchor still resolves.
+
 ## Moderation
 
 Deliberately minimal and reversible, because gates are what make review systems

@@ -110,6 +110,15 @@ re-attaches; revised text surfaces as unresolved).
 
 ## Review mechanics
 
+- [x] Author page (/me): papers matched by ORCID, under review vs past, window
+      timeline, comment counts and how many await an author reply
+- [ ] Real resolved/unresolved state: needs comment typing (major/minor/
+      question) plus the client reporting whether each anchor still resolves,
+      since the server cannot know that. The author page shows "on an earlier
+      version" as a stand-in and labels it as a hint
+- [ ] Deposit closed rounds to Zenodo and store the DOI in documents.review_doi
+      (the column and the author-page link already exist, unpopulated)
+
 - [x] Zoom inside the PDF column only (re-render, not CSS transform, so figures
       stay sharp); fixed a latent bug where text-layer spans never scaled,
       which made selection rectangles ~29% too wide even at 100%

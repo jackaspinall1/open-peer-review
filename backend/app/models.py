@@ -38,6 +38,8 @@ class Document(Base):
     source_landing_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     source_name: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
     license: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    # DOI of the deposited review record, once rounds are archived (see TODO).
+    review_doi: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
     pdf_sha256: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     uploaded_by: Mapped[Optional[int]] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True

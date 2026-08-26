@@ -4,6 +4,7 @@ import IndexPage from './pages/IndexPage'
 import UploadPage from './pages/UploadPage'
 import ViewerPage from './pages/ViewerPage'
 import LoginPage from './pages/LoginPage'
+import MyPapersPage from './pages/MyPapersPage'
 
 export default function App() {
   const { me, logout } = useMe()
@@ -17,7 +18,7 @@ export default function App() {
           <Link to="/upload" className="navlink">Upload paper</Link>
           {me?.logged_in ? (
             <span className="userbox">
-              <span className="username" title={me.orcid}>{me.name}</span>
+              <Link to="/me" className="username" title="Your papers">{me.name}</Link>
               <button className="linkbtn" onClick={() => logout().then(() => navigate('/'))}>Sign out</button>
             </span>
           ) : (
@@ -30,6 +31,7 @@ export default function App() {
         <Route path="/upload" element={<UploadPage />} />
         <Route path="/doc/:id" element={<ViewerPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/me" element={<MyPapersPage />} />
       </Routes>
     </div>
   )
