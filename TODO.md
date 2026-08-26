@@ -110,6 +110,10 @@ re-attaches; revised text surfaces as unresolved).
 
 ## Review mechanics
 
+- [x] Zoom inside the PDF column only (re-render, not CSS transform, so figures
+      stay sharp); fixed a latent bug where text-layer spans never scaled,
+      which made selection rectangles ~29% too wide even at 100%
+
 - [x] Review rounds: 2-week window per version, extendable weekly to a month,
       author-opened, public countdown, late comments accepted but marked and
       excluded from the record, participation shown so thin rounds look thin

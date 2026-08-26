@@ -303,6 +303,18 @@ SP=/tmp node e2e.mjs              # SP = where screenshots are written
 It exercises: PDF rendering, mock login, text selection → anchored comment,
 highlight re-anchoring after reload, and highlight↔sidebar focus.
 
+## Zoom
+
+The PDF column zooms independently of the rest of the page, so figures can be
+examined without the header, review bar or comment sidebar moving. Controls sit
+top-right of the column, and Ctrl or Cmd with the scroll wheel works as usual.
+
+Zooming re-renders each page at the new scale rather than applying a CSS
+transform. A transform would upscale the canvas bitmap and blur exactly the
+figures someone is trying to inspect, and it would leave the text layer at the
+wrong size. Highlights are recomputed from the re-rendered text layer, so they
+track the zoom to within a fraction of a pixel.
+
 ## How anchoring works
 
 Comments store a W3C-style text quote selector: `{page, quote, prefix, suffix,

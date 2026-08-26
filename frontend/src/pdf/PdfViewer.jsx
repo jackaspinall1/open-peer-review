@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { getDocument } from './pdfSetup'
 import { confidentHit, findQuote, findQuoteInPages, selectionToAnchor } from './anchors'
 import PdfPage from './PdfPage'
@@ -12,6 +12,7 @@ export default function PdfViewer({ url, docVersion, comments, activeCommentId, 
   const [pdfDoc, setPdfDoc] = useState(null)
   const [error, setError] = useState(null)
   const [textTick, setTextTick] = useState(0) // bumped as each page's text layer readies
+  const [zoom, setZoom] = useState(1)
   const [resolutions, setResolutions] = useState({}) // commentId -> {page,start,end} | {page,pin}
   const pageDataRef = useRef({}) // pageNum -> pageData
   const rootRef = useRef(null)
@@ -61,6 +62,44 @@ export default function PdfViewer({ url, docVersion, comments, activeCommentId, 
 
   useEffect(() => { onResolutions?.(resolutions) }, [resolutions, onResolutions])
 
+  const ZOOM_MIN = 0.6
+  const ZOOM_MAX = 3
+  const STEPS = [0.6, 0.75, 1, 1.25, 1.5, 2, 2.5, 3]
+
+  /** Zoom about the viewport centre so the reader keeps their place. */
+  const applyZoom = useCallback((next) => {
+    const el = rootRef.current
+    const clamped = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, next))
+    setZoom((prev) => {
+      if (clamped === prev || !el) return clamped
+      const ratio = clamped / prev
+      const midpoint = el.scrollTop + el.clientHeight / 2
+      requestAnimationFrame(() => {
+        el.scrollTop = midpoint * ratio - el.clientHeight / 2
+      })
+      return clamped
+    })
+  }, [])
+
+  const step = (dir) => {
+    const i = STEPS.findIndex((s) => s >= zoom - 0.001)
+    applyZoom(STEPS[Math.min(STEPS.length - 1, Math.max(0, i + dir))] ?? zoom)
+  }
+
+  // Ctrl/Cmd + wheel is the standard zoom gesture; without preventDefault the
+  // browser zooms the whole page instead, which is exactly what we do not want.
+  useEffect(() => {
+    const el = rootRef.current
+    if (!el) return
+    const onWheel = (e) => {
+      if (!e.ctrlKey && !e.metaKey) return
+      e.preventDefault()
+      applyZoom(zoom * (e.deltaY < 0 ? 1.1 : 1 / 1.1))
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [zoom, applyZoom])
+
   const handleMouseUp = () => {
     const sel = window.getSelection()
     if (!sel || sel.isCollapsed || sel.rangeCount === 0) return
@@ -90,6 +129,13 @@ export default function PdfViewer({ url, docVersion, comments, activeCommentId, 
 
   return (
     <div className="pdfcolumn" ref={rootRef} onMouseUp={handleMouseUp}>
+      <div className="zoombar" role="group" aria-label="Zoom">
+        <button onClick={() => step(-1)} disabled={zoom <= ZOOM_MIN} title="Zoom out">−</button>
+        <button className="zoomlevel" onClick={() => applyZoom(1)} title="Reset to 100%">
+          {Math.round(zoom * 100)}%
+        </button>
+        <button onClick={() => step(1)} disabled={zoom >= ZOOM_MAX} title="Zoom in">+</button>
+      </div>
       {!pdfDoc && <p className="muted loadingpdf">Loading PDF…</p>}
       {pdfDoc &&
         Array.from({ length: pdfDoc.numPages }, (_, i) => (
@@ -97,6 +143,7 @@ export default function PdfViewer({ url, docVersion, comments, activeCommentId, 
             key={i + 1}
             pdfDoc={pdfDoc}
             pageNum={i + 1}
+            zoom={zoom}
             highlights={byPage[i + 1] ?? []}
             onTextReady={(n, data) => { pageDataRef.current[n] = data; setTextTick((t) => t + 1) }}
             onHighlightClick={onHighlightClick}

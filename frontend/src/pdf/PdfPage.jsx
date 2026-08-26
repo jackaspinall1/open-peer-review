@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { TextLayer } from './pdfSetup'
 import { buildPageData, offsetsToRange, rectsForRange } from './anchors'
 
-const PAGE_WIDTH = 820
+const BASE_WIDTH = 820
 
-export default function PdfPage({ pdfDoc, pageNum, highlights, onTextReady, onHighlightClick }) {
+export default function PdfPage({ pdfDoc, pageNum, zoom = 1, highlights, onTextReady, onHighlightClick }) {
   const containerRef = useRef(null)
   const canvasRef = useRef(null)
   const textLayerRef = useRef(null)
@@ -23,13 +23,16 @@ export default function PdfPage({ pdfDoc, pageNum, highlights, onTextReady, onHi
     const run = async () => {
       const page = await pdfDoc.getPage(pageNum)
       if (cancelled) return
-      const scale = PAGE_WIDTH / page.getViewport({ scale: 1 }).width
+      const scale = (BASE_WIDTH * zoom) / page.getViewport({ scale: 1 }).width
       const viewport = page.getViewport({ scale })
       setSize({ width: viewport.width, height: viewport.height })
 
       const layerEl = textLayerRef.current
       layerEl.innerHTML = ''
+      // pdf.js 6 sizes spans from --total-scale-factor, which its own stylesheet
+      // derives inside a .pdfViewer .page wrapper we do not use, so set both.
       layerEl.style.setProperty('--scale-factor', viewport.scale)
+      layerEl.style.setProperty('--total-scale-factor', viewport.scale)
       const textContent = await page.getTextContent()
       if (cancelled) return
       textLayer = new TextLayer({ textContentSource: textContent, container: layerEl, viewport })
@@ -86,7 +89,7 @@ export default function PdfPage({ pdfDoc, pageNum, highlights, onTextReady, onHi
       pageDataRef.current = null
       setTextReady(false)
     }
-  }, [pdfDoc, pageNum])
+  }, [pdfDoc, pageNum, zoom])
 
   // Re-anchor highlights whenever comments or text layer change
   useEffect(() => {
@@ -122,7 +125,7 @@ export default function PdfPage({ pdfDoc, pageNum, highlights, onTextReady, onHi
       className="pdfpage"
       data-page={pageNum}
       onClick={hitTest}
-      style={size ? { width: size.width, height: size.height } : { width: PAGE_WIDTH, height: PAGE_WIDTH * 1.294 }}
+      style={size ? { width: size.width, height: size.height } : { width: BASE_WIDTH * zoom, height: BASE_WIDTH * zoom * 1.294 }}
     >
       <canvas ref={canvasRef} style={size ? { width: size.width, height: size.height } : undefined} />
       <div className="highlightLayer">
