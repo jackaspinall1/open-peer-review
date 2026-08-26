@@ -17,7 +17,9 @@ engine = create_engine(
 @event.listens_for(engine, "connect")
 def _set_sqlite_pragma(dbapi_connection, _record):
     cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.execute("PRAGMA foreign_keys=ON")   # or none of the cascades fire
+    cursor.execute("PRAGMA journal_mode=WAL")  # readers do not block the writer
+    cursor.execute("PRAGMA busy_timeout=5000") # wait rather than fail on a lock
     cursor.close()
 
 

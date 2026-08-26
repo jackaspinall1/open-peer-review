@@ -269,6 +269,48 @@ def compute_coi(user: User, document: Document) -> tuple[str, str]:
     return "none", "No co-authorship found"
 
 
+def compute_alias_badges(document_id: int, user_id: int) -> None:
+    """Fill in a reviewer's badges. Runs off the request path.
+
+    The checks make one OpenAlex request per author with an ORCID, so on a
+    fourteen-author paper this took five seconds inline: a reviewer clicked
+    "Post comment" and waited. The comment now posts immediately and the badges
+    resolve a moment later, which is also what the lazy retry path expects.
+    """
+    from .db import SessionLocal
+
+    db = SessionLocal()
+    try:
+        alias = (
+            db.query(ReviewerAlias)
+            .filter(ReviewerAlias.document_id == document_id, ReviewerAlias.user_id == user_id)
+            .one_or_none()
+        )
+        if alias is None:
+            return
+        document, user = db.get(Document, document_id), db.get(User, user_id)
+        if document is None or user is None:
+            return
+        if alias.coi_status == "pending":
+            alias.coi_status, alias.coi_detail = compute_coi(user, document)
+        if alias.expertise_level == "pending":
+            if document.topics_json is None:
+                topics = classify_document(document)
+                if topics is not None:
+                    document.topics_json = json.dumps(topics)
+            try:
+                alias.expertise_level, alias.expertise_detail = compute_expertise(
+                    user, json.loads(document.topics_json) if document.topics_json else None)
+            except Exception as exc:
+                log.warning("Expertise check failed for %s: %s", user.orcid, exc)
+        alias.coi_checked_at = utcnow()
+        db.commit()
+    except Exception as exc:
+        log.warning("Badge computation failed for user %s on doc %s: %s", user_id, document_id, exc)
+    finally:
+        db.close()
+
+
 def get_or_create_alias(db: Session, document: Document, user: User) -> ReviewerAlias:
     alias = (
         db.query(ReviewerAlias)
@@ -282,26 +324,12 @@ def get_or_create_alias(db: Session, document: Document, user: User) -> Reviewer
         .filter(ReviewerAlias.document_id == document.id)
         .scalar()
     ) + 1
-    status, detail = compute_coi(user, document)
-    if document.topics_json is None:
-        topics = classify_document(document)
-        if topics is not None:
-            document.topics_json = json.dumps(topics)
-    try:
-        exp_level, exp_detail = compute_expertise(
-            user, json.loads(document.topics_json) if document.topics_json else None)
-    except Exception as exc:
-        log.warning("Expertise check failed for %s: %s", user.orcid, exc)
-        exp_level, exp_detail = "pending", "Check not yet completed"
     alias = ReviewerAlias(
         document_id=document.id,
         user_id=user.id,
         alias_number=next_number,
-        coi_status=status,
-        coi_detail=detail,
-        expertise_level=exp_level,
-        expertise_detail=exp_detail,
-        coi_checked_at=utcnow(),
+        coi_status="pending",
+        expertise_level="pending",
     )
     db.add(alias)
     db.commit()
@@ -343,3 +371,18 @@ def refresh_pending(db: Session, document: Document) -> None:
         changed = True
     if changed:
         db.commit()
+
+
+def refresh_pending_detached(document_id: int) -> None:
+    """Background wrapper for refresh_pending, with its own session."""
+    from .db import SessionLocal
+
+    db = SessionLocal()
+    try:
+        document = db.get(Document, document_id)
+        if document is not None:
+            refresh_pending(db, document)
+    except Exception as exc:
+        log.warning("Badge retry failed for doc %s: %s", document_id, exc)
+    finally:
+        db.close()

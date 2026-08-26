@@ -108,3 +108,20 @@ def test_documents_without_a_round_report_none(client):
     assert payload["round"] is None
     comment(client, doc, "no round yet")
     assert client.get(f"/api/documents/{doc}").json()["comments"][0]["after_window"] is False
+
+
+def test_posting_a_comment_does_not_compute_badges_inline(client):
+    """Badges must resolve in the background.
+
+    Computed inline they make one OpenAlex request per author with an ORCID,
+    which measured five seconds on a fourteen-author paper: the reviewer waits
+    while their comment posts. The alias number is assigned immediately because
+    the response needs it; the badges start pending.
+    """
+    login(client, AUTHOR)
+    doc = make_document(client)
+    body = comment(client, doc, "first comment on this paper")
+    posted = body["comments"][0]
+    assert posted["alias"] == "Reviewer 1"
+    assert posted["coi"]["status"] == "pending"
+    assert posted["expertise"]["level"] == "pending"

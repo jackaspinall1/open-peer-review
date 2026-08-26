@@ -1,7 +1,7 @@
 import json
 import uuid
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -280,11 +280,17 @@ def extend_review_round(doc_id: int, user: User = Depends(require_user), db: Ses
 
 
 @router.get("/{doc_id}")
-def get_document(doc_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def get_document(
+    doc_id: int,
+    background: BackgroundTasks,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
     doc = db.get(Document, doc_id)
     if doc is None:
         raise HTTPException(status_code=404, detail="Document not found")
-    coi.refresh_pending(db, doc)
+    # Retrying failed badge checks must not block the read either.
+    background.add_task(coi.refresh_pending_detached, doc.id)
     return full_document(db, doc, user)
 
 

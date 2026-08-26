@@ -252,12 +252,18 @@ comments need shared storage and the ORCID token exchange needs a server-side
 client secret.
 
 It needs a persistent disk. `DATA_DIR` holds the SQLite database and the PDFs,
-so without a mounted volume every deploy discards the reviews.
+so without a mounted volume every deploy discards the reviews. Budget by paper
+rather than by user: measured preprints are 2 to 3 MB, and 20 MB is a safe
+pessimistic figure for image-heavy work, so a gigabyte holds somewhere between
+50 and 500 papers. Comments are negligible by comparison, a few hundred bytes
+each. Past a few thousand papers, move the PDFs to object storage (Cloudflare R2
+charges no egress, which matters when the files are served on every page view)
+and leave SQLite holding only text.
 
 ```bash
 fly auth login
 fly launch --no-deploy --name <app-name>          # fly.toml is already written
-fly volumes create review_data --size 1 --region lhr
+fly volumes create review_data --size 3 --region lhr   # PDFs are 2-20 MB each
 fly secrets set \
   SECRET_KEY="$(python3 -c 'import secrets; print(secrets.token_urlsafe(48))')" \
   ORCID_CLIENT_ID=APP-XXXX ORCID_CLIENT_SECRET=xxxx \

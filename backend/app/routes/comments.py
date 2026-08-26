@@ -1,12 +1,12 @@
 import json
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..auth import get_current_user, require_user
-from ..coi import get_or_create_alias
+from ..coi import compute_alias_badges, get_or_create_alias
 from ..rounds import open_round_for
 from ..db import get_db
 from .. import config
@@ -53,6 +53,7 @@ def _validate_anchor(anchor: dict) -> dict:
 def create_comment(
     doc_id: int,
     payload: CommentIn,
+    background: BackgroundTasks,
     user: User = Depends(require_user),
     db: Session = Depends(get_db),
 ):
@@ -73,7 +74,9 @@ def create_comment(
     elif payload.anchor is not None:
         anchor = _validate_anchor(payload.anchor)
 
-    get_or_create_alias(db, doc, user)  # assigns pseudonym + COI on first comment
+    alias = get_or_create_alias(db, doc, user)  # assigns the pseudonym immediately
+    if alias.coi_status == "pending" or alias.expertise_level == "pending":
+        background.add_task(compute_alias_badges, doc.id, user.id)
     comment = Comment(
         document_id=doc.id,
         user_id=user.id,
