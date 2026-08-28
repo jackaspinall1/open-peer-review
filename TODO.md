@@ -45,6 +45,62 @@ re-attaches; revised text surfaces as unresolved).
 - [ ] Push the review record back the other way: DOI/link to the review page in
       the preprint's comments field where the server supports it
 
+## Legal entity and jurisdiction
+
+Needs a decision before any public launch. A memo is planned; this is the raw
+material for it.
+
+**The problem.** Reviewers are pseudonymous, so a claimant cannot identify them
+and the complaint lands on whoever hosts the statement. That is the PubPeer
+pattern: the litigation went to the platform, not to the commenters. Today the
+host is one person, with no entity in between.
+
+**Why the answer cannot be to avoid the category.** The critique with the most
+value is the most exposed: duplicated panels, impossible statistics, data that
+could not have come from the described experiment. A review system that cannot
+host that is reduced to typo-spotting, which is worth something and is not the
+thing that changes the literature.
+
+**What reduces the exposure**
+
+- An entity rather than a person. A letter to an organisation is a process; a
+  letter to an individual is their evening.
+- US domicile, for three specific mechanisms: Section 230 immunity for
+  user-posted content, with no UK or EU equivalent; state anti-SLAPP statutes
+  allowing early dismissal with costs, which addresses the real risk here of
+  nuisance and expense rather than losing; and the SPEECH Act, which makes
+  foreign defamation judgments largely unenforceable in the US. Caveat:
+  jurisdiction is not purely elective. UK courts can take a case over material
+  read in the UK, and a UK-resident operator stays reachable wherever the entity
+  sits, so this protects the organisation rather than the individual.
+- Media liability insurance, which exists and is inexpensive at this scale.
+- A disclosure policy decided and published in advance. This is a trust feature
+  as much as a shield: reviewers will not write the valuable thing if they
+  suspect a name gets handed over at the first angry email.
+- A conduct norm of observation over conclusion. "Panels 2a and 2c appear
+  identical" is a checkable claim about a document; "the authors fabricated
+  this" is a claim about people. The defensible form and the rigorous form are
+  the same sentence, which is why PubPeer's culture converged on it. One line
+  to add to the existing standard.
+
+**Constraints that interact**
+
+- Non-commercial is already committed, and many preprints are CC BY-NC-ND (four
+  of seven in one real sample), which a commercial operator cannot host. The
+  entity should be a nonprofit or equivalent.
+- AGPL means any hosted fork must publish its source. Fine, but the operator
+  should accept it knowingly rather than discover it.
+- Data currently sits in London. A US host means UK and EU personal data
+  transfers: workable, more paperwork.
+
+**Options**, ascending in effort: fiscal sponsorship by an existing US nonprofit,
+which gives a legal entity without incorporating anything; handing it to a US
+organisation whose mission already covers this; incorporating a US nonprofit;
+or a UK entity accepting the greater exposure.
+
+**Not urgent for the pilot.** Five invited colleagues on your own preprint is not
+the scenario that produces letters.
+
 ## Launch path
 
 - [x] Rate limits: 5 comments/minute per user, 10 papers/hour, 10 reports/hour
