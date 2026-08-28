@@ -340,6 +340,33 @@ fly certs add <your-domain>                        # then add the DNS records it
 Finally add `https://<your-domain>/auth/orcid/callback` as a redirect URI on the
 ORCID client, at which point the login flow no longer needs a bounce page.
 
+## Backups
+
+Reviews are the only irreplaceable thing here. The papers can be re-fetched from
+the preprint servers, but the commentary exists nowhere else.
+
+```bash
+./scripts/backup.sh                     # -> backups/review-backup-<timestamp>.tar.gz
+./scripts/restore.sh <archive> [target] # refuses to overwrite unless FORCE=1
+```
+
+The database is copied with `sqlite3 .backup` rather than `cp`, because it runs
+in WAL mode and a plain file copy can capture a database whose committed data is
+still in a separate write-ahead log. Every backup is integrity-checked before it
+is written, and again before a restore.
+
+On a deployed instance, run the script over SSH and pull the archive down:
+
+```bash
+fly ssh console -C "/app/scripts/backup.sh /data/backups"
+fly ssh sftp get /data/backups/review-backup-<timestamp>.tar.gz
+```
+
+Fly takes daily volume snapshots with five days of retention, restorable with
+`fly volumes create --snapshot-id`, but their own documentation is clear that
+snapshots alone are not a backup strategy: a host failure loses everything since
+the last one. Keep copies off the host.
+
 ## Tests
 
 ```bash

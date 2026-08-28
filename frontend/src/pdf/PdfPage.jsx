@@ -2,9 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { TextLayer } from './pdfSetup'
 import { buildPageData, offsetsToRange, rectsForRange } from './anchors'
 
-const BASE_WIDTH = 820
 
-export default function PdfPage({ pdfDoc, pageNum, zoom = 1, highlights, onTextReady, onHighlightClick }) {
+export default function PdfPage({ pdfDoc, pageNum, width = 820, zoom = 1, highlights, onTextReady, onHighlightClick }) {
   const containerRef = useRef(null)
   const canvasRef = useRef(null)
   const textLayerRef = useRef(null)
@@ -23,7 +22,7 @@ export default function PdfPage({ pdfDoc, pageNum, zoom = 1, highlights, onTextR
     const run = async () => {
       const page = await pdfDoc.getPage(pageNum)
       if (cancelled) return
-      const scale = (BASE_WIDTH * zoom) / page.getViewport({ scale: 1 }).width
+      const scale = (width * zoom) / page.getViewport({ scale: 1 }).width
       const viewport = page.getViewport({ scale })
       setSize({ width: viewport.width, height: viewport.height })
 
@@ -89,7 +88,7 @@ export default function PdfPage({ pdfDoc, pageNum, zoom = 1, highlights, onTextR
       pageDataRef.current = null
       setTextReady(false)
     }
-  }, [pdfDoc, pageNum, zoom])
+  }, [pdfDoc, pageNum, width, zoom])
 
   // Re-anchor highlights whenever comments or text layer change
   useEffect(() => {
@@ -125,7 +124,7 @@ export default function PdfPage({ pdfDoc, pageNum, zoom = 1, highlights, onTextR
       className="pdfpage"
       data-page={pageNum}
       onClick={hitTest}
-      style={size ? { width: size.width, height: size.height } : { width: BASE_WIDTH * zoom, height: BASE_WIDTH * zoom * 1.294 }}
+      style={size ? { width: size.width, height: size.height } : { width: width * zoom, height: width * zoom * 1.294 }}
     >
       <canvas ref={canvasRef} style={size ? { width: size.width, height: size.height } : undefined} />
       <div className="highlightLayer">

@@ -281,3 +281,19 @@ h2 { font-size: 16px; margin: 0; }
   background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 13.5px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.3);
 }
+
+/* ---------- narrow screens ---------- */
+/* Below two-column width the sidebar cannot keep 400px: on a phone that left
+   the PDF about 30px wide. Stack instead, paper first, comments beneath. */
+@media (max-width: 900px) {
+  .app { height: auto; min-height: 100vh; }
+  .viewerbody { flex-direction: column; }
+  .pdfcolumn { overflow: visible; padding: 16px 8px; }
+  .sidebar {
+    width: auto; border-left: none; border-top: 1px solid var(--line);
+    overflow: visible;
+  }
+  .viewerhead { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .topbar { padding: 0 12px; }
+  .page { padding: 20px 14px; }
+}

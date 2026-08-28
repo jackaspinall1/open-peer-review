@@ -47,6 +47,10 @@ re-attaches; revised text surfaces as unresolved).
 
 ## Launch path
 
+- [x] Backup and restore scripts, integrity-checked, WAL-safe
+- [x] Works on a phone: the paper fits the screen and comments stack beneath
+      (previously the fixed 400px sidebar left the PDF about 30px wide)
+
 - [x] Republish repo publicly (AGPL)
 - [x] Real SECRET_KEY; no hardcoded default (a known key in a public repo lets
       anyone forge a session for any ORCID iD)

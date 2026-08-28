@@ -13,6 +13,22 @@ export default function PdfViewer({ url, docVersion, comments, activeCommentId, 
   const [error, setError] = useState(null)
   const [textTick, setTextTick] = useState(0) // bumped as each page's text layer readies
   const [zoom, setZoom] = useState(1)
+  const [fitWidth, setFitWidth] = useState(820)
+
+  // Fit the page to the column instead of assuming a desktop-width window.
+  // Rounded to 10px so a resize drag does not re-render every page continuously.
+  useEffect(() => {
+    const el = rootRef.current
+    if (!el) return
+    const measure = () => {
+      const available = el.clientWidth - 32   // column padding
+      setFitWidth(Math.max(280, Math.min(820, Math.round(available / 10) * 10)))
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [pdfDoc])
   const [resolutions, setResolutions] = useState({}) // commentId -> {page,start,end} | {page,pin}
   const pageDataRef = useRef({}) // pageNum -> pageData
   const rootRef = useRef(null)
@@ -143,6 +159,7 @@ export default function PdfViewer({ url, docVersion, comments, activeCommentId, 
             key={i + 1}
             pdfDoc={pdfDoc}
             pageNum={i + 1}
+            width={fitWidth}
             zoom={zoom}
             highlights={byPage[i + 1] ?? []}
             onTextReady={(n, data) => { pageDataRef.current[n] = data; setTextTick((t) => t + 1) }}
