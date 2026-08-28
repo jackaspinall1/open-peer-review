@@ -5,6 +5,7 @@ import UploadPage from './pages/UploadPage'
 import ViewerPage from './pages/ViewerPage'
 import LoginPage from './pages/LoginPage'
 import MyPapersPage from './pages/MyPapersPage'
+import PrivacyPage from './pages/PrivacyPage'
 
 export default function App() {
   const { me, logout, unread } = useMe()
@@ -35,7 +36,12 @@ export default function App() {
         <Route path="/doc/:id" element={<ViewerPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/me" element={<MyPapersPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
       </Routes>
+      <footer className="sitefoot">
+        <span>Open Peer Review · non-commercial, open source (AGPL-3.0)</span>
+        <Link to="/privacy">Privacy</Link>
+      </footer>
     </div>
   )
 }

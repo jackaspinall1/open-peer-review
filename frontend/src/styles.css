@@ -297,3 +297,15 @@ h2 { font-size: 16px; margin: 0; }
   .topbar { padding: 0 12px; }
   .page { padding: 20px 14px; }
 }
+
+.sitefoot {
+  flex: none; display: flex; justify-content: space-between; gap: 16px;
+  padding: 10px 20px; font-size: 12px; color: var(--muted);
+  background: var(--card); border-top: 1px solid var(--line);
+}
+.sitefoot a { color: var(--muted); }
+.prose { line-height: 1.55; }
+.prose h2 { font-size: 15px; margin: 22px 0 8px; }
+.prose p, .prose li { font-size: 14px; }
+.prose ul { padding-left: 20px; }
+.prose li { margin-bottom: 6px; }

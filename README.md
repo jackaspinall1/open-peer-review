@@ -340,6 +340,26 @@ fly certs add <your-domain>                        # then add the DNS records it
 Finally add `https://<your-domain>/auth/orcid/callback` as a redirect URI on the
 ORCID client, at which point the login flow no longer needs a bounce page.
 
+## Privacy
+
+A notice lives at `/privacy` (source in `frontend/src/pages/PrivacyPage.jsx`),
+linked from the site footer. It is deliberately specific rather than boilerplate,
+because the most important thing it says is the limit of the pseudonymity
+promise: comments are pseudonymous to readers, but the operator holds the link
+between an ORCID iD and its comments, and could be compelled to disclose it. A
+reviewer deciding how candid to be is entitled to know that before they write.
+
+The subject of a comment here is a piece of work, not a person, which is the
+whole point of the conduct standard. The reason a professional read is still
+worth having is the narrow case where the two blur: an allegation about how
+results were produced is about conduct rather than about the paper, and that is
+the boundary moderation exists to police.
+
+It also records that no email address is held (ORCID is not asked for one),
+that there is no analytics or third-party tracking of any kind, that ORCID and
+OpenAlex receive a user's ORCID iD during badge computation, and that a
+deposited review record is permanent and cannot later be withdrawn.
+
 ## Rate limits
 
 Five comments a minute per person, which is the balance the design is aiming at:

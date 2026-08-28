@@ -49,7 +49,16 @@ re-attaches; revised text surfaces as unresolved).
 
 - [x] Rate limits: 5 comments/minute per user, 10 papers/hour, 10 reports/hour
 - [ ] Schedule the backup script (a script nobody runs is not a backup)
-- [ ] Privacy note and terms, before any public link
+- [x] Privacy notice at /privacy, linked from a site footer
+- [ ] Fill in the contact address (CONTACT@EXAMPLE.COM placeholder in
+      frontend/src/pages/PrivacyPage.jsx)
+- [ ] Have the privacy notice read by someone legally qualified before a public
+      launch. It is honest and specific but written by the builders. The subject
+      of a comment is the work, not the person; the case worth a professional
+      opinion is the narrow one where those blur, i.e. an allegation about how
+      results were produced
+- [ ] Terms of use (separate from privacy): what conduct is expected, what
+      happens to your content, no warranty
 - [ ] Monitoring: nobody currently finds out if it falls over or if the
       background badge checks start failing
 
