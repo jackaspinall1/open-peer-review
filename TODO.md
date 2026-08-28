@@ -47,6 +47,12 @@ re-attaches; revised text surfaces as unresolved).
 
 ## Launch path
 
+- [x] Rate limits: 5 comments/minute per user, 10 papers/hour, 10 reports/hour
+- [ ] Schedule the backup script (a script nobody runs is not a backup)
+- [ ] Privacy note and terms, before any public link
+- [ ] Monitoring: nobody currently finds out if it falls over or if the
+      background badge checks start failing
+
 - [x] Backup and restore scripts, integrity-checked, WAL-safe
 - [x] Works on a phone: the paper fits the screen and comments stack beneath
       (previously the fixed 400px sidebar left the PDF about 30px wide)

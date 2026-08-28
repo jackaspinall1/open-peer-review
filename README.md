@@ -340,6 +340,21 @@ fly certs add <your-domain>                        # then add the DNS records it
 Finally add `https://<your-domain>/auth/orcid/callback` as a redirect URI on the
 ORCID client, at which point the login flow no longer needs a bounce page.
 
+## Rate limits
+
+Five comments a minute per person, which is the balance the design is aiming at:
+enough to flag several typos while reading a paper, not enough to bury a page.
+Adding a paper is capped at ten an hour, since each one fetches a PDF and
+queries OpenAlex, and reporting at ten an hour, because nobody legitimately
+reports a dozen comments in an hour and report spam is the cheapest way to bury
+criticism. Voting is not limited: it is cheap, and reading a long thread means
+many votes.
+
+Limits are keyed on the signed-in user rather than the IP address, since every
+write requires an ORCID account. They are held in memory, so they reset on
+deploy and would not be shared between machines; that is fine for a single
+instance and is the first thing to revisit if it ever becomes more than one.
+
 ## Backups
 
 Reviews are the only irreplaceable thing here. The papers can be re-fetched from

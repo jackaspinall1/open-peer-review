@@ -11,7 +11,7 @@ import json as _json
 
 from pydantic import BaseModel
 
-from .. import coi, config, metadata, rounds
+from .. import coi, config, metadata, ratelimit, rounds
 from ..auth import require_user
 from ..db import get_db
 from ..models import Comment, Document, DocumentAuthor, User
@@ -78,6 +78,7 @@ class ImportIn(BaseModel):
 
 @router.post("/import")
 def import_work(payload: ImportIn, user: User = Depends(require_user), db: Session = Depends(get_db)):
+    ratelimit.check("upload", user.id, 10, 3600, "adding papers")
     try:
         work = metadata.fetch_work(payload.openalex_id)
     except ValueError:
@@ -164,6 +165,7 @@ async def upload_document(
     except (json.JSONDecodeError, AssertionError):
         raise HTTPException(status_code=422, detail="authors must be a JSON list")
 
+    ratelimit.check("upload", user.id, 10, 3600, "adding papers")
     content = await pdf.read()
     if len(content) > MAX_PDF_BYTES:
         raise HTTPException(status_code=413, detail="PDF too large (50 MB limit)")

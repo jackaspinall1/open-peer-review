@@ -9,7 +9,7 @@ from ..auth import get_current_user, require_user
 from ..coi import compute_alias_badges, get_or_create_alias
 from ..rounds import open_round_for
 from ..db import get_db
-from .. import config
+from .. import config, ratelimit
 from ..models import Comment, Document, Notification, Report, User, Vote
 from ..serialize import comment_tree
 
@@ -60,6 +60,7 @@ def create_comment(
     doc = db.get(Document, doc_id)
     if doc is None:
         raise HTTPException(status_code=404, detail="Document not found")
+    ratelimit.check("comment", user.id, 5, 60, "commenting")
     body = payload.body.strip()
     if not body:
         raise HTTPException(status_code=422, detail="Comment body required")
@@ -172,6 +173,9 @@ def report_comment(
         raise HTTPException(status_code=404, detail="Comment not found")
     if comment.user_id == user.id:
         raise HTTPException(status_code=422, detail="You cannot report your own comment")
+    # Nobody legitimately reports a dozen comments in an hour, and report spam
+    # is the cheapest way to bury criticism.
+    ratelimit.check("report", user.id, 10, 3600, "reporting")
     existing = (
         db.query(Report)
         .filter(Report.comment_id == comment_id, Report.user_id == user.id)

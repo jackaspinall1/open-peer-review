@@ -12,7 +12,7 @@ os.environ["ADMIN_ORCIDS"] = "0000-0002-0000-0001"
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-from app import coi, metadata  # noqa: E402
+from app import coi, metadata, ratelimit  # noqa: E402
 from app.db import Base, engine, init_db  # noqa: E402
 from app.main import app  # noqa: E402
 
@@ -40,6 +40,7 @@ def no_network(monkeypatch):
 @pytest.fixture()
 def client():
     init_db()
+    ratelimit.reset()   # counters are process-global; do not leak between tests
     # Each test gets an empty database: otherwise rows leak between tests and
     # assertions about counts pass alone but fail in a full run.
     Base.metadata.drop_all(engine)
