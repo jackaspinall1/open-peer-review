@@ -152,6 +152,29 @@ class Report(Base):
     resolved: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
+class UserProfile(Base):
+    """A reviewer's scholarly graph, fetched once and reused for every paper.
+
+    Asking OpenAlex "did X co-author with A? with B? with C?" costs one request
+    per author of every paper X comments on. Fetching X's own works once and
+    intersecting locally costs two requests for the rest of their life here,
+    which matters because the free tier is measured in a thousand calls.
+    """
+
+    __tablename__ = "user_profiles"
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    # {co-author ORCID: {"y": latest year of a normal-sized shared work | null,
+    #                    "L": [ids of shared works with more than 15 authors]}}
+    coauthors_json: Mapped[str] = mapped_column(Text)
+    topics_json: Mapped[str] = mapped_column(Text)
+    works_count: Mapped[int] = mapped_column(Integer, default=0)
+    truncated: Mapped[bool] = mapped_column(Boolean, default=False)
+    computed_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
 class Notification(Base):
     """Tells a reviewer that someone replied to their comment.
 

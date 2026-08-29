@@ -150,6 +150,14 @@ the scenario that produces letters.
 
 ## Trust & identity
 
+- [x] Cache each reviewer's scholarly profile (co-authors, shared large works,
+      topics) so conflict and expertise checks are local intersections. Two
+      OpenAlex requests per reviewer ever, rather than ~15 per reviewer per
+      paper; the free tier is 1,000 metered credits, so the old pattern would
+      have run out during a pilot
+- [ ] Consider self-hosting the OpenAlex snapshot if volume ever justifies it;
+      paid credits are $0.0001/call, so 100k calls is $10
+
 - [x] Show a reader the badges their comment would carry, before they write it.
       Alias numbers are now assigned on first comment rather than first view,
       so silent viewers neither consume numbers nor reveal their presence

@@ -31,32 +31,106 @@ def _norm(orcid: str) -> str:
     return orcid.strip().upper().replace("HTTPS://ORCID.ORG/", "")
 
 
-def _shared_works(client: httpx.Client, orcid_a: str, orcid_b: str) -> tuple[int, int | None, set[str]]:
-    """(normal co-authored works, year of the most recent one, large-work ids).
+PROFILE_MAX_WORKS = 1000
+PROFILE_STALE_DAYS = 30
 
-    "Normal" means at or below LARGE_WORK_AUTHORS authors: an actual
-    collaboration rather than a shared appearance on a community roadmap.
+
+def _fetch_profile(client: httpx.Client, orcid: str) -> dict:
+    """Everything about a reviewer that every paper needs, in one pass.
+
+    Their co-authors (with the most recent normal-sized collaboration and any
+    shared large works), their topics, and how many works were seen.
     """
-    params = {
-        "filter": f"author.orcid:https://orcid.org/{orcid_a},author.orcid:https://orcid.org/{orcid_b}",
-        "per-page": 50,
-        "sort": "publication_date:desc",
-        "select": "id,publication_year,authorships",
-    }
+    coauthors: dict[str, dict] = {}
+    seen, truncated, cursor = 0, False, "*"
+    while cursor and seen < PROFILE_MAX_WORKS:
+        params = {
+            "filter": f"author.orcid:{orcid}",
+            "per-page": 200,
+            "cursor": cursor,
+            "select": "id,publication_year,authorships",
+        }
+        if config.OPENALEX_MAILTO:
+            params["mailto"] = config.OPENALEX_MAILTO
+        resp = client.get(f"{OPENALEX}/works", params=params)
+        resp.raise_for_status()
+        data = resp.json()
+        for work in data.get("results", []):
+            seen += 1
+            authorships = work.get("authorships") or []
+            is_large = len(authorships) > LARGE_WORK_AUTHORS
+            year = work.get("publication_year")
+            for auth in authorships:
+                other = (auth.get("author") or {}).get("orcid")
+                if not other:
+                    continue
+                other = _norm(other)
+                if other == _norm(orcid):
+                    continue
+                entry = coauthors.setdefault(other, {"y": None, "L": []})
+                if is_large:
+                    if work["id"] not in entry["L"]:
+                        entry["L"].append(work["id"])
+                elif year and (entry["y"] is None or year > entry["y"]):
+                    entry["y"] = year
+        cursor = data.get("meta", {}).get("next_cursor")
+        if seen >= PROFILE_MAX_WORKS and cursor:
+            truncated = True
+
+    topics = []
+    params = {"filter": f"orcid:{orcid}", "select": "topics,works_count"}
     if config.OPENALEX_MAILTO:
         params["mailto"] = config.OPENALEX_MAILTO
-    resp = client.get(f"{OPENALEX}/works", params=params)
+    resp = client.get(f"{OPENALEX}/authors", params=params)
     resp.raise_for_status()
-    normal, latest, large = 0, None, set()
-    for w in resp.json().get("results", []):
-        if len(w.get("authorships") or []) > LARGE_WORK_AUTHORS:
-            large.add(w["id"])  # ids, not a count: one roadmap can contain several authors
-            continue
-        normal += 1
-        year = w.get("publication_year")
-        if year and (latest is None or year > latest):
-            latest = year
-    return normal, latest, large
+    results = resp.json().get("results") or []
+    if results:
+        topics = [_topic_ref(t) for t in results[0].get("topics") or []]
+
+    return {"coauthors": coauthors, "topics": topics, "works": seen, "truncated": truncated}
+
+
+def get_profile(db: Session, user: User) -> dict | None:
+    """Cached scholarly profile for a reviewer, rebuilt when stale.
+
+    Two OpenAlex requests per reviewer, then every paper they touch is a local
+    set intersection. The previous approach asked one question per author of
+    every paper, which on a fourteen-author preprint was fifteen requests for
+    each new reviewer.
+    """
+    from .models import UserProfile
+
+    row = db.get(UserProfile, user.id)
+    now = utcnow()
+    if row is not None:
+        computed = row.computed_at
+        if computed.tzinfo is None:
+            computed = computed.replace(tzinfo=now.tzinfo)
+        if now - computed < timedelta(days=PROFILE_STALE_DAYS):
+            return {
+                "coauthors": json.loads(row.coauthors_json),
+                "topics": json.loads(row.topics_json),
+                "works": row.works_count,
+                "truncated": bool(row.truncated),
+            }
+
+    try:
+        with httpx.Client(timeout=20) as client:
+            profile = _fetch_profile(client, _norm(user.orcid))
+    except Exception as exc:
+        log.warning("Profile build failed for %s: %s", user.orcid, exc)
+        return None
+
+    if row is None:
+        row = UserProfile(user_id=user.id)
+        db.add(row)
+    row.coauthors_json = json.dumps(profile["coauthors"])
+    row.topics_json = json.dumps(profile["topics"])
+    row.works_count = profile["works"]
+    row.truncated = profile["truncated"]
+    row.computed_at = now
+    db.commit()
+    return profile
 
 
 # Disclosure policy (see README "Anonymity and badge disclosure").
@@ -123,25 +197,21 @@ def classify_document(doc) -> list[dict] | None:
         return None
 
 
-def compute_expertise(user: User, doc_topics: list[dict] | None) -> tuple[str, str]:
-    """Reviewer's topical publication record vs this paper. Bucketed, no titles,
-    no institutions — career hierarchy is deliberately not displayed."""
+def compute_expertise(user: User, doc_topics: list[dict] | None, profile: dict | None) -> tuple[str, str]:
+    """The reviewer's topical record against this paper, read from the profile.
+
+    Level only. Work counts and years-active are withheld: both are seniority
+    proxies that shrink the anonymity set, and neither changes the judgement a
+    reader makes (does this person work in this area, yes or no).
+    """
     if not doc_topics:
         return "pending", "Paper not yet classified"
-    params = {"filter": f"orcid:{user.orcid}", "select": "topics,works_count"}
-    if config.OPENALEX_MAILTO:
-        params["mailto"] = config.OPENALEX_MAILTO
-    with httpx.Client(timeout=8) as client:
-        resp = client.get(f"{OPENALEX}/authors", params=params)
-        resp.raise_for_status()
-        results = resp.json().get("results") or []
-        if not results or not results[0].get("works_count"):
-            return "no_record", "No publications found for this ORCID iD"
-        mine = [dict(_topic_ref(t), count=t.get("count", 0)) for t in results[0].get("topics") or []]
+    if profile is None:
+        return "pending", "Check not yet completed"
+    if not profile.get("works"):
+        return "no_record", "No publications found for this ORCID iD"
 
-    # Level only. Work counts and years-active are withheld: both are seniority
-    # proxies that shrink the anonymity set, and neither changes the judgement a
-    # reader makes (does this person work in this area, yes or no).
+    mine = profile.get("topics", [])
     for id_field, level, phrase in (
         ("id", "topic", "Publishes on this paper's topic"),
         ("subfield_id", "subfield", "Publishes in this paper's subfield"),
@@ -205,8 +275,13 @@ def _overlapping_org(mine: list[dict], theirs: list[dict]) -> str | None:
     return None
 
 
-def compute_coi(user: User, document: Document) -> tuple[str, str]:
-    """Return (status, detail). Status: author|coauthor|none|unverifiable|pending."""
+def compute_coi(user: User, document: Document, profile: dict | None) -> tuple[str, str]:
+    """Return (status, detail).
+
+    Everything except the institutional check is a local intersection against
+    the reviewer's cached profile, so a paper costs no OpenAlex requests however
+    many authors it has.
+    """
     my_orcid = _norm(user.orcid)
     with_orcid = [a for a in document.authors if a.orcid]
     without = len(document.authors) - len(with_orcid)
@@ -216,40 +291,40 @@ def compute_coi(user: User, document: Document) -> tuple[str, str]:
             return "author", "Commenter is a listed author"
     if not with_orcid:
         return "unverifiable", "No authors have ORCID iDs"
-
-    try:
-        with httpx.Client(timeout=5) as client:
-            hits, large_ids = [], set()
-            for a in with_orcid:
-                n, latest, large = _shared_works(client, my_orcid, _norm(a.orcid))
-                if n > 0:
-                    hits.append((n, latest))
-                large_ids |= large
-            if hits:
-                hits.sort(key=lambda h: (h[1] or 0, h[0]), reverse=True)
-                latest = hits[0][1]
-                recent = latest is not None and (datetime.now().year - int(latest)) <= RECENT_YEARS
-                return "coauthor", (
-                    "Has co-authored with an author of this paper in the last "
-                    f"{RECENT_YEARS} years" if recent
-                    else "Has co-authored with an author of this paper, but not recently"
-                )
-            if len(large_ids) >= LARGE_COLLAB_MIN:
-                return "large_collab", (
-                    f"Appears on {LARGE_COLLAB_MIN} or more large multi-author works "
-                    "with an author of this paper (roadmaps or consortium papers), which "
-                    "often means a shared programme"
-                )
-            if large_ids:
-                return "none", (
-                    "No substantive co-authorship found; shares only an occasional "
-                    "large multi-author paper, such as a field-wide roadmap"
-                )
-    except Exception as exc:  # network/API failure: report pending, retry later
-        log.warning("OpenAlex COI check failed for %s: %s", user.orcid, exc)
+    if profile is None:
         return "pending", "Check not yet completed"
 
-    # Institutional overlap — best-effort: ORCID employment lists are often empty
+    coauthors = profile.get("coauthors", {})
+    latest, large_ids = None, set()
+    for a in with_orcid:
+        entry = coauthors.get(_norm(a.orcid))
+        if not entry:
+            continue
+        if entry.get("y") and (latest is None or entry["y"] > latest):
+            latest = entry["y"]
+        large_ids.update(entry.get("L") or [])
+
+    if latest is not None:
+        recent = (datetime.now().year - int(latest)) <= RECENT_YEARS
+        return "coauthor", (
+            "Has co-authored with an author of this paper in the last "
+            f"{RECENT_YEARS} years" if recent
+            else "Has co-authored with an author of this paper, but not recently"
+        )
+    if len(large_ids) >= LARGE_COLLAB_MIN:
+        return "large_collab", (
+            f"Appears on {LARGE_COLLAB_MIN} or more large multi-author works "
+            "with an author of this paper (roadmaps or consortium papers), which "
+            "often means a shared programme"
+        )
+    if large_ids:
+        return "none", (
+            "No substantive co-authorship found; shares only an occasional "
+            "large multi-author paper, such as a field-wide roadmap"
+        )
+
+    # Institutional overlap is a different service (ORCID) and is only consulted
+    # when no co-authorship was found.
     try:
         with httpx.Client(timeout=5) as client:
             mine = _fetch_employments(client, my_orcid)
@@ -257,12 +332,9 @@ def compute_coi(user: User, document: Document) -> tuple[str, str]:
                 for a in with_orcid:
                     org = _overlapping_org(mine, _fetch_employments(client, _norm(a.orcid)))
                     if org:
-                        # institution name withheld: it narrows a topic's author
-                        # population by ~3 orders of magnitude
                         return "colleague", "Shares an institution with an author of this paper"
     except Exception as exc:
         log.warning("ORCID employment check failed for %s: %s", user.orcid, exc)
-        # co-authorship already came back clean; degrade to 'none' rather than pending
 
     if without:
         return "none", f"{without} of {len(document.authors)} author(s) could not be checked (no ORCID)"
@@ -291,18 +363,16 @@ def compute_alias_badges(document_id: int, user_id: int) -> None:
         document, user = db.get(Document, document_id), db.get(User, user_id)
         if document is None or user is None:
             return
+        profile = get_profile(db, user)
         if alias.coi_status == "pending":
-            alias.coi_status, alias.coi_detail = compute_coi(user, document)
+            alias.coi_status, alias.coi_detail = compute_coi(user, document, profile)
         if alias.expertise_level == "pending":
             if document.topics_json is None:
                 topics = classify_document(document)
                 if topics is not None:
                     document.topics_json = json.dumps(topics)
-            try:
-                alias.expertise_level, alias.expertise_detail = compute_expertise(
-                    user, json.loads(document.topics_json) if document.topics_json else None)
-            except Exception as exc:
-                log.warning("Expertise check failed for %s: %s", user.orcid, exc)
+            alias.expertise_level, alias.expertise_detail = compute_expertise(
+                user, json.loads(document.topics_json) if document.topics_json else None, profile)
         alias.coi_checked_at = utcnow()
         db.commit()
     except Exception as exc:
@@ -371,18 +441,16 @@ def refresh_pending(db: Session, document: Document) -> None:
         if checked is not None and now - checked < RETRY_AFTER:
             continue
         user = db.get(User, alias.user_id)
+        profile = get_profile(db, user)
         if alias.coi_status == "pending":
-            alias.coi_status, alias.coi_detail = compute_coi(user, document)
+            alias.coi_status, alias.coi_detail = compute_coi(user, document, profile)
         if alias.expertise_level == "pending":
             if document.topics_json is None:
                 topics = classify_document(document)
                 if topics is not None:
                     document.topics_json = json.dumps(topics)
-            try:
-                alias.expertise_level, alias.expertise_detail = compute_expertise(
-                    user, json.loads(document.topics_json) if document.topics_json else None)
-            except Exception as exc:
-                log.warning("Expertise retry failed for %s: %s", user.orcid, exc)
+            alias.expertise_level, alias.expertise_detail = compute_expertise(
+                user, json.loads(document.topics_json) if document.topics_json else None, profile)
         alias.coi_checked_at = now
         changed = True
     if changed:

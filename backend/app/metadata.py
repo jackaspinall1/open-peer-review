@@ -1,12 +1,12 @@
-"""Resolve paper metadata (title, authors, ORCIDs, affiliations) from OpenAlex.
+"""Paper metadata from OpenAlex.
 
-The client extracts a title candidate and/or DOI string from the PDF; we look
-the work up and return its verified authorship record. ORCIDs come only from
-the work's own authorships — never from name search — because a wrong ORCID
-would grant someone else's "Author" badge.
+Papers are only ever added by their own authors, from their own indexed record.
+ORCIDs come solely from a work's own authorships, never from a name search,
+because a wrong ORCID would grant someone else's "Author" badge.
 """
 import logging
 import re
+import time
 
 import httpx
 
@@ -15,10 +15,6 @@ from . import config
 log = logging.getLogger(__name__)
 
 OPENALEX = "https://api.openalex.org"
-
-
-def _norm_title(t: str) -> str:
-    return re.sub(r"[^a-z0-9]+", " ", t.lower()).strip()
 
 
 def _shape(work: dict, source: str) -> dict:
@@ -37,61 +33,29 @@ def _shape(work: dict, source: str) -> dict:
     return {"found": True, "source": source, "title": work.get("title"), "doi": doi, "authors": authors}
 
 
-def resolve(title: str | None, doi: str | None) -> dict:
-    params = {"select": "title,doi,authorships"}
-    if config.OPENALEX_MAILTO:
-        params["mailto"] = config.OPENALEX_MAILTO
-    try:
-        with httpx.Client(timeout=8) as client:
-            if doi:
-                resp = client.get(f"{OPENALEX}/works/doi:{doi}", params=params)
-                if resp.status_code == 200:
-                    return _shape(resp.json(), "doi")
-            if title and len(title.strip()) >= 10:
-                resp = client.get(
-                    f"{OPENALEX}/works",
-                    params={**params, "filter": f"title.search:{title}", "per-page": 1},
-                )
-                resp.raise_for_status()
-                results = resp.json().get("results") or []
-                if results:
-                    hit = results[0]
-                    a, b = _norm_title(title), _norm_title(hit.get("title") or "")
-                    # only trust a close title match: wrong-paper autofill would
-                    # poison the COI/Author machinery
-                    if a and b and (a == b or a in b or b in a):
-                        return _shape(hit, "title")
-    except Exception as exc:
-        log.warning("Metadata resolution failed: %s", exc)
-    return {"found": False, "source": None, "title": title, "doi": doi, "authors": []}
+def _get(client: httpx.Client, url: str, params: dict) -> httpx.Response:
+    """GET with one retry on 429.
+
+    OpenAlex rate limits by burst as well as by daily quota, and a transient
+    429 should not turn into "could not reach OpenAlex" for a user trying to
+    add a paper.
+    """
+    for attempt in range(2):
+        resp = client.get(url, params=params)
+        if resp.status_code == 429 and attempt == 0:
+            time.sleep(float(resp.headers.get("Retry-After", 2)))
+            continue
+        resp.raise_for_status()
+        return resp
+    resp.raise_for_status()
+    return resp
 
 
 def _params(extra: dict) -> dict:
+    """Query params with the polite-pool mailto attached when configured."""
     if config.OPENALEX_MAILTO:
         return {**extra, "mailto": config.OPENALEX_MAILTO}
     return extra
-
-
-def pdf_candidates(work: dict) -> list[dict]:
-    """Fetchable PDF locations, repositories first.
-
-    Publisher sites (RSC, Elsevier, Wiley) routinely 403 automated requests even
-    for open-access articles; arXiv/Research Square/PMC copies do not.
-    """
-    cands = []
-    for loc in work.get("locations") or []:
-        if not loc.get("pdf_url"):
-            continue
-        src = loc.get("source") or {}
-        cands.append({
-            "url": loc["pdf_url"],
-            "landing_url": loc.get("landing_page_url"),
-            "source": src.get("display_name"),
-            "license": loc.get("license"),
-            "is_repository": src.get("type") == "repository",
-        })
-    cands.sort(key=lambda c: not c["is_repository"])
-    return cands
 
 
 PREPRINT_SOURCES = (
@@ -115,16 +79,16 @@ def list_importable_works(orcid: str) -> list[dict]:
     post the revised version back to the preprint server.
     """
     with httpx.Client(timeout=8) as client:
-        resp = client.get(
+        resp = _get(
+            client,
             f"{OPENALEX}/works",
-            params=_params({
+            _params({
                 "filter": f"author.orcid:{orcid}",
                 "per-page": 50,
                 "sort": "publication_date:desc",
                 "select": "id,title,publication_year,type,doi,locations",
             }),
         )
-        resp.raise_for_status()
     out = []
     for w in resp.json().get("results", []):
         cands = [c for c in pdf_candidates(w) if _is_preprint(w, c)]
@@ -147,11 +111,11 @@ def fetch_work(openalex_id: str) -> dict:
     if not re.fullmatch(r"W\d+", openalex_id):
         raise ValueError("Invalid OpenAlex work id")
     with httpx.Client(timeout=8) as client:
-        resp = client.get(
+        resp = _get(
+            client,
             f"{OPENALEX}/works/{openalex_id}",
-            params=_params({"select": "id,title,doi,authorships,topics,locations"}),
+            _params({"select": "id,title,doi,authorships,topics,locations"}),
         )
-        resp.raise_for_status()
         return resp.json()
 
 

@@ -4,7 +4,7 @@ Five comments a minute allows a burst of small corrections while a reader works
 through a paper, and asks for a pause before a hundred.
 """
 from app import ratelimit
-from conftest import PDF, comment, login, make_document
+from conftest import comment, login, make_document
 
 AUTHOR = "0000-0002-1825-0097"
 OTHER = "0000-0001-5109-3700"
@@ -48,22 +48,20 @@ def test_reports_are_bounded_since_report_spam_buries_criticism(client):
 
 
 def test_adding_papers_is_bounded(client):
-    login(client, AUTHOR)
-    import json as _json
+    """Importing fetches a PDF and queries OpenAlex, so it is capped per hour.
 
-    for i in range(10):
-        r = client.post(
-            "/api/documents",
-            files={"pdf": ("p.pdf", PDF, "application/pdf")},
-            data={"title": f"Paper {i}", "doi": f"10.1234/p{i}", "authors": _json.dumps([])},
-        )
-        assert r.status_code == 200
-    eleventh = client.post(
-        "/api/documents",
-        files={"pdf": ("p.pdf", PDF, "application/pdf")},
-        data={"title": "Paper 11", "doi": "10.1234/p11", "authors": _json.dumps([])},
-    )
-    assert eleventh.status_code == 429
+    Checked against the limiter directly: the import route itself needs the
+    network, and there is no manual upload path to drive instead.
+    """
+    import pytest
+    from fastapi import HTTPException
+
+    for _ in range(10):
+        ratelimit.check("upload", 1, 10, 3600, "adding papers")
+    with pytest.raises(HTTPException) as exc:
+        ratelimit.check("upload", 1, 10, 3600, "adding papers")
+    assert exc.value.status_code == 429
+    ratelimit.check("upload", 2, 10, 3600, "adding papers")   # a different user is unaffected
 
 
 def test_votes_are_not_rate_limited(client):

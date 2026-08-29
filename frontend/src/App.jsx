@@ -1,7 +1,7 @@
 import { Link, Route, Routes, useNavigate } from 'react-router-dom'
 import { useMe } from './auth'
 import IndexPage from './pages/IndexPage'
-import UploadPage from './pages/UploadPage'
+import AddPaperPage from './pages/UploadPage'
 import ViewerPage from './pages/ViewerPage'
 import LoginPage from './pages/LoginPage'
 import MyPapersPage from './pages/MyPapersPage'
@@ -16,7 +16,7 @@ export default function App() {
       <header className="topbar">
         <Link to="/" className="brand">Open Peer Review</Link>
         <nav>
-          <Link to="/upload" className="navlink">Upload paper</Link>
+          <Link to="/upload" className="navlink">Add paper</Link>
           {me?.logged_in ? (
             <span className="userbox">
               <Link to="/me" className="username" title="Your papers and replies">
@@ -32,7 +32,7 @@ export default function App() {
       </header>
       <Routes>
         <Route path="/" element={<IndexPage />} />
-        <Route path="/upload" element={<UploadPage />} />
+        <Route path="/upload" element={<AddPaperPage />} />
         <Route path="/doc/:id" element={<ViewerPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/me" element={<MyPapersPage />} />

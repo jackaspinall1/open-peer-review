@@ -58,6 +58,19 @@ indicates a shared programme, and that does earn the weaker badge. Distinct
 works are counted rather than per-author matches, since one roadmap commonly
 contains several of a paper's authors.
 
+OpenAlex is called **twice per reviewer, ever**, not once per author of every
+paper. A reviewer's own works are fetched once and cached as a profile: which
+ORCIDs they have published with, the most recent normal-sized collaboration with
+each, any shared large works, and their own topics. Every paper they then touch
+is a local set intersection costing nothing.
+
+This matters because the free tier is metered. The API reports a limit of 1,000
+credits at $0.0001 each, and the previous approach asked one question per author
+per reviewer per paper: about fifteen requests for each new reviewer on a
+fourteen-author preprint, which would exhaust the allowance after roughly
+sixty-five reviewer-paper pairs. Two per reviewer is comfortable. Profiles are
+rebuilt after thirty days.
+
 The checks run strongest-first: author-list match, then OpenAlex co-authorship
 (one request per author; sorting by publication date descending with one result
 yields the count and the most recent shared year in a single call), then

@@ -7,18 +7,10 @@ otherwise a non-author could add a paper and lock its authors out.
 import json
 
 from app.metadata import normalise_doi
-from conftest import PDF, login, make_document
+from conftest import login, make_document
 
 AUTHOR = "0000-0002-1825-0097"
 OTHER = "0000-0001-5109-3700"
-
-
-def _upload(client, title, doi=""):
-    return client.post(
-        "/api/documents",
-        files={"pdf": ("p.pdf", PDF, "application/pdf")},
-        data={"title": title, "doi": doi, "authors": json.dumps([])},
-    ).json()
 
 
 def test_version_suffixes_do_not_create_new_papers():
@@ -47,28 +39,32 @@ def test_openalex_id_is_an_identity_key(client):
     db.close()
 
 
-def test_same_doi_returns_the_existing_paper(client):
-    login(client, AUTHOR)
-    first = _upload(client, "A paper", "10.1234/abc/v1")
-    second = _upload(client, "A paper posted again", "10.1234/abc/v2")
-    assert second["id"] == first["id"]
-    assert second.get("existing") is True
-    # and it did not overwrite the original
-    assert client.get(f"/api/documents/{first['id']}").json()["title"] == "A paper"
+def test_a_versioned_doi_finds_the_existing_paper(client):
+    """Import dedupes on the version-stripped DOI, so v2 finds the v1 paper."""
+    from app.db import SessionLocal
+    from app.metadata import normalise_doi
+    from app.routes.documents import _existing_document
 
-
-def test_a_different_person_adding_it_lands_on_the_same_discussion(client):
     login(client, AUTHOR)
-    first = _upload(client, "Shared paper", "10.1234/xyz")
-    login(client, OTHER)
-    assert _upload(client, "Shared paper", "10.1234/xyz")["id"] == first["id"]
+    doc_id = make_document(client, title="A paper", doi=normalise_doi("10.1234/abc/v1"))
+    db = SessionLocal()
+    assert _existing_document(db, None, normalise_doi("10.1234/abc/v2")).id == doc_id
+    assert _existing_document(db, None, normalise_doi("10.1234/abc")).id == doc_id
+    db.close()
 
 
 def test_papers_without_a_doi_are_not_merged(client):
+    """A missing DOI is not an identity: two untitled papers stay separate."""
+    from app.db import SessionLocal
+    from app.routes.documents import _existing_document
+
     login(client, AUTHOR)
-    a = _upload(client, "Untitled one")
-    b = _upload(client, "Untitled two")
-    assert a["id"] != b["id"]
+    a = make_document(client, title="Untitled one")
+    b = make_document(client, title="Untitled two")
+    assert a != b
+    db = SessionLocal()
+    assert _existing_document(db, None, None) is None
+    db.close()
 
 
 def test_any_listed_author_controls_the_paper_not_just_the_depositor(client):
