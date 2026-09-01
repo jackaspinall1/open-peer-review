@@ -4,11 +4,12 @@ import { useEffect, useRef, useState } from 'react'
  * Shown the moment a review window opens, because that is the moment the ask
  * has to happen.
  *
- * Broadcast is offered because it is what people expect, but the copyable link
- * is first: a direct message from an author to a named colleague is the highest
- * converting request in this whole system, and posting to a feed is not.
+ * It offers the link and nothing else. A direct message from an author to a
+ * named colleague is the highest converting request in this system, and a share
+ * button pointed at a feed is not, so the useful thing is a URL on the
+ * clipboard.
  */
-export default function ShareDialog({ url, title, days, onClose }) {
+export default function ShareDialog({ url, onClose }) {
   const [copied, setCopied] = useState(false)
   const closeRef = useRef(null)
 
@@ -18,10 +19,6 @@ export default function ShareDialog({ url, title, days, onClose }) {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
-
-  const text = `I have opened my preprint for public peer review: “${title}”. Comments welcome over the next ${days} days.`
-  const x = `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`
-  const linkedin = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`
 
   const copy = async () => {
     try {
@@ -45,11 +42,6 @@ export default function ShareDialog({ url, title, days, onClose }) {
         <div className="sharelink">
           <input readOnly value={url} onFocus={(e) => e.target.select()} />
           <button className="primary small" onClick={copy}>{copied ? 'Copied' : 'Copy link'}</button>
-        </div>
-
-        <div className="sharerow">
-          <a className="sharebtn" href={x} target="_blank" rel="noreferrer">Share on X</a>
-          <a className="sharebtn" href={linkedin} target="_blank" rel="noreferrer">Share on LinkedIn</a>
         </div>
 
         <button ref={closeRef} className="linkbtn" onClick={onClose}>Done</button>

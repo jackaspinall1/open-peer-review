@@ -222,9 +222,7 @@ export default function ViewerPage() {
       <SelectionPopover popover={popover} onComment={startDraft} />
       {sharing && (
         <ShareDialog
-          url={`${window.location.origin}/doc/${doc.id}`}
-          title={doc.title}
-          days={doc.round?.days_left ?? 14}
+          url={`${window.location.origin}/p/${doc.slug ?? doc.id}`}
           onClose={() => setSharing(false)}
         />
       )}

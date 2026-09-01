@@ -30,7 +30,7 @@ function Metrics({ p }) {
 function PaperRow({ p, past }) {
   return (
     <li className="doccard">
-      <Link to={`/doc/${p.id}`} className="doctitle">{p.title}</Link>
+      <Link to={`/p/${p.slug ?? p.id}`} className="doctitle">{p.title}</Link>
       <div className="docmeta">
         <span>v{p.version}</span>
         {p.round ? <RoundStatus round={p.round} documentId={p.id} /> : <span className="muted">No review window open yet</span>}
@@ -40,7 +40,7 @@ function PaperRow({ p, past }) {
           </a>
         )}
         {past && (
-          <a className="sourcelink" href={`/api/documents/${p.id}/record?format=md`}>
+          <a className="sourcelink" href={`/api/documents/${p.slug ?? p.id}/record?format=md`}>
             Download the review record ↓
           </a>
         )}
@@ -103,7 +103,7 @@ export default function MyPapersPage() {
           <ul className="doclist">
             {notes.map((n) => (
               <li key={n.id} className={n.read ? 'doccard' : 'doccard unread'}>
-                <Link to={`/doc/${n.document_id}#comment-${n.comment_id}`} className="doctitle">
+                <Link to={`/p/${n.document_slug ?? n.document_id}#comment-${n.comment_id}`} className="doctitle">
                   {n.document_title}
                 </Link>
                 <blockquote className="quote">{n.your_comment}</blockquote>

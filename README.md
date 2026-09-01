@@ -108,10 +108,10 @@ the whole system.
 
 - **Two weeks**, and there is no deadline on the author afterwards: revising is
   their own work, and "revise within 30 days" is a journal pathology this avoids.
-- Opening a round is a deliberate act by an author, and it leads straight into
-  a share prompt: the copyable link first, then X and LinkedIn. Reviews happen
-  because someone was asked, and a message to three colleagues who know the work
-  beats any post, so the dialog says so.
+- Opening a round is a deliberate act by an author, and it leads straight into a
+  share prompt offering the paper's link and nothing else. Reviews happen because
+  someone was asked, and a message to three colleagues who know the work beats
+  any post, so what the author needs is a URL on the clipboard.
 - Revisions are **not uploaded here**. A new version belongs on the preprint
   server; the paper is re-fetched in the background, at most every six hours,
   and the version bumps by itself when the file changes.
@@ -160,6 +160,14 @@ address, and ORCID addresses are usually private, so there is nowhere to send a
 message. A reviewer learns of a response when they next visit. Reaching people
 who do not return would mean collecting an email address separately, with the
 privacy obligations that brings.
+
+## Paper URLs
+
+Papers live at `/p/<code>`, where the code is eight characters from an alphabet
+with no O, 0, I, l or 1, so it survives being read aloud or copied off a slide.
+It is not the database id: sequential ids in a shared link would let anyone walk
+the whole site, which is exactly the directory this deliberately does not have.
+Older numeric links still resolve.
 
 ## No directory
 

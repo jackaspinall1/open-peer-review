@@ -31,6 +31,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<IndexPage />} />
         <Route path="/upload" element={<Navigate to="/me" replace />} />
+        <Route path="/p/:id" element={<ViewerPage />} />
         <Route path="/doc/:id" element={<ViewerPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/me" element={<MyPapersPage />} />

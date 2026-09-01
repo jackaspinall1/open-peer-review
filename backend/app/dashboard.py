@@ -65,6 +65,7 @@ def my_papers(db: Session, user: User) -> dict:
         rnd = summarise(db, doc)
         entry = {
             "id": doc.id,
+            "slug": doc.slug,
             "title": doc.title,
             "version": doc.version,
             "doi": doc.doi,

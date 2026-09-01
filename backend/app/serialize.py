@@ -20,6 +20,7 @@ def author_user_ids(db: Session, doc: Document) -> set[int]:
 def document_summary(doc: Document, comment_count: int) -> dict:
     return {
         "id": doc.id,
+        "slug": doc.slug,
         "title": doc.title,
         "doi": doc.doi,
         "authors": [{"name": a.name, "orcid": a.orcid, "affiliation": a.affiliation} for a in doc.authors],

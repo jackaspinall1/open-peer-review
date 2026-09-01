@@ -112,7 +112,7 @@ def build(db: Session, doc: Document, base_url: str) -> dict:
         "record": {
             "produced_by": "Open Peer Review",
             "produced_at": _fmt(datetime.now(timezone.utc)),
-            "page": f"{base_url}/doc/{doc.id}",
+            "page": f"{base_url}/p/{doc.slug or doc.id}",
             "note": (
                 "A public review record. Reviewers are pseudonymous within this paper; "
                 "the conflict-of-interest and expertise labels are computed from public "

@@ -173,3 +173,20 @@ def normalise_doi(doi: str | None) -> str | None:
     if d.startswith("10.1101/"):
         d = re.sub(r"v\d+$", "", d)
     return d or None
+
+
+# Unambiguous alphabet: no O/0, I/l/1, so a code read aloud or copied from a
+# slide is not mistyped.
+SLUG_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789"
+SLUG_LENGTH = 8
+
+
+def new_slug(exists) -> str:
+    """A short share code, retried until unused."""
+    import secrets
+
+    for _ in range(20):
+        candidate = "".join(secrets.choice(SLUG_ALPHABET) for _ in range(SLUG_LENGTH))
+        if not exists(candidate):
+            return candidate
+    raise RuntimeError("could not allocate a slug")

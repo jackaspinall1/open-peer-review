@@ -50,6 +50,16 @@ def can_manage(user: User, doc: Document) -> bool:
     return user.orcid.upper() in {a.orcid.upper() for a in doc.authors if a.orcid}
 
 
+def resolve(db: Session, ident: str) -> Document:
+    """Find a paper by its share code, or by numeric id for older links."""
+    doc = db.query(Document).filter(Document.slug == ident).one_or_none()
+    if doc is None and ident.isdigit():
+        doc = db.get(Document, int(ident))
+    if doc is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return doc
+
+
 def _existing_document(db: Session, openalex_id: str | None, doi: str | None) -> Document | None:
     """One live discussion per paper: a second copy would split the review."""
     if openalex_id:
@@ -142,6 +152,9 @@ def import_work(payload: ImportIn, user: User = Depends(require_user), db: Sessi
     filename = f"{uuid.uuid4().hex}.pdf"
     (config.PDF_DIR / filename).write_bytes(content)
     doc = Document(
+        slug=metadata.new_slug(
+            lambda c: db.query(Document).filter(Document.slug == c).first() is not None
+        ),
         title=shaped["title"], doi=metadata.normalise_doi(shaped["doi"]),
         openalex_id=openalex_id, pdf_filename=filename, uploaded_by=user.id,
         source_pdf_url=used["url"], source_landing_url=used.get("landing_url"),
@@ -210,12 +223,10 @@ def refresh_from_source(document_id: int) -> None:
         db.close()
 
 
-@router.post("/{doc_id}/rounds")
-def open_review_round(doc_id: int, user: User = Depends(require_user), db: Session = Depends(get_db)):
+@router.post("/{ident}/rounds")
+def open_review_round(ident: str, user: User = Depends(require_user), db: Session = Depends(get_db)):
     """Open a review window. Explicit, because it is also the moment to ask people."""
-    doc = db.get(Document, doc_id)
-    if doc is None:
-        raise HTTPException(status_code=404, detail="Document not found")
+    doc = resolve(db, ident)
     if not can_manage(user, doc):
         raise HTTPException(status_code=403, detail="Only an author of this paper can open review")
     try:
@@ -225,11 +236,9 @@ def open_review_round(doc_id: int, user: User = Depends(require_user), db: Sessi
     return rounds.summarise(db, doc)
 
 
-@router.post("/{doc_id}/rounds/extend")
-def extend_review_round(doc_id: int, user: User = Depends(require_user), db: Session = Depends(get_db)):
-    doc = db.get(Document, doc_id)
-    if doc is None:
-        raise HTTPException(status_code=404, detail="Document not found")
+@router.post("/{ident}/rounds/extend")
+def extend_review_round(ident: str, user: User = Depends(require_user), db: Session = Depends(get_db)):
+    doc = resolve(db, ident)
     if not can_manage(user, doc):
         raise HTTPException(status_code=403, detail="Only an author of this paper can extend review")
     try:
@@ -239,16 +248,14 @@ def extend_review_round(doc_id: int, user: User = Depends(require_user), db: Ses
     return rounds.summarise(db, doc)
 
 
-@router.get("/{doc_id}")
+@router.get("/{ident}")
 def get_document(
-    doc_id: int,
+    ident: str,
     background: BackgroundTasks,
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
-    doc = db.get(Document, doc_id)
-    if doc is None:
-        raise HTTPException(status_code=404, detail="Document not found")
+    doc = resolve(db, ident)
     # Count the open, unless it is one of the paper's own authors looking at
     # their own work. No cookie is set and nothing about the visitor is stored:
     # this is a counter, not analytics.
@@ -262,9 +269,9 @@ def get_document(
     return full_document(db, doc, user)
 
 
-@router.get("/{doc_id}/my-relationship")
+@router.get("/{ident}/my-relationship")
 def my_relationship(
-    doc_id: int,
+    ident: str,
     background: BackgroundTasks,
     user: User = Depends(require_user),
     db: Session = Depends(get_db),
@@ -275,9 +282,7 @@ def my_relationship(
     and an author seeing "co-author relationship found" for the first time
     underneath their own posted comment is a bad way to learn how this works.
     """
-    doc = db.get(Document, doc_id)
-    if doc is None:
-        raise HTTPException(status_code=404, detail="Document not found")
+    doc = resolve(db, ident)
     rel = coi.get_or_create_relationship(db, doc, user)
     if rel.coi_status == "pending" or rel.expertise_level == "pending":
         background.add_task(coi.compute_alias_badges, doc.id, user.id)
@@ -292,16 +297,14 @@ def my_relationship(
     }
 
 
-@router.get("/{doc_id}/record")
-def review_record(doc_id: int, format: str = "json", db: Session = Depends(get_db)):
+@router.get("/{ident}/record")
+def review_record(ident: str, format: str = "json", db: Session = Depends(get_db)):
     """The artifact a review round leaves behind, in JSON or Markdown.
 
     Public: the record is the point of the exercise, and anyone should be able
     to take a copy without an account.
     """
-    doc = db.get(Document, doc_id)
-    if doc is None:
-        raise HTTPException(status_code=404, detail="Document not found")
+    doc = resolve(db, ident)
     built = record.build(db, doc, config.FRONTEND_URL.rstrip("/"))
     stem = f"review-record-{doc.id}-v{doc.version}"
     if format == "md":
@@ -317,11 +320,9 @@ def review_record(doc_id: int, format: str = "json", db: Session = Depends(get_d
     )
 
 
-@router.get("/{doc_id}/pdf")
-def get_pdf(doc_id: int, db: Session = Depends(get_db)):
-    doc = db.get(Document, doc_id)
-    if doc is None:
-        raise HTTPException(status_code=404, detail="Document not found")
+@router.get("/{ident}/pdf")
+def get_pdf(ident: str, db: Session = Depends(get_db)):
+    doc = resolve(db, ident)
     path = config.PDF_DIR / doc.pdf_filename
     if not path.exists():
         raise HTTPException(status_code=404, detail="PDF file missing")

@@ -10,7 +10,7 @@ from ..coi import compute_alias_badges, get_or_create_alias
 from ..rounds import open_round_for
 from ..db import get_db
 from .. import config, ratelimit
-from ..models import Comment, Document, Notification, Report, User, Vote
+from ..models import Comment, Notification, Report, User, Vote
 from ..serialize import comment_tree
 
 router = APIRouter(prefix="/api")
@@ -49,17 +49,17 @@ def _validate_anchor(anchor: dict) -> dict:
             "prefix": prefix[-64:], "suffix": suffix[:64]}
 
 
-@router.post("/documents/{doc_id}/comments")
+@router.post("/documents/{ident}/comments")
 def create_comment(
-    doc_id: int,
+    ident: str,
     payload: CommentIn,
     background: BackgroundTasks,
     user: User = Depends(require_user),
     db: Session = Depends(get_db),
 ):
-    doc = db.get(Document, doc_id)
-    if doc is None:
-        raise HTTPException(status_code=404, detail="Document not found")
+    from .documents import resolve
+
+    doc = resolve(db, ident)
     ratelimit.check("comment", user.id, 5, 60, "commenting")
     body = payload.body.strip()
     if not body:
@@ -253,6 +253,7 @@ def list_notifications(user: User = Depends(require_user), db: Session = Depends
         out.append({
             "id": n.id,
             "document_id": doc.id,
+            "document_slug": doc.slug,
             "document_title": doc.title,
             "comment_id": reply.id,
             "your_comment": mine.body[:140],

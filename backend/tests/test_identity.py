@@ -81,3 +81,30 @@ def test_unrelated_users_cannot_manage(client):
     login(client, "0000-0002-0000-0009")
     assert client.get(f"/api/documents/{doc}").json()["can_manage"] is False
     assert client.post(f"/api/documents/{doc}/rounds").status_code == 403
+
+
+def test_papers_are_reached_by_short_share_code(client):
+    """Sequential ids in a shared link would let anyone walk the whole site,
+    which is the directory this deliberately does not have."""
+    from app.db import SessionLocal
+    from app.metadata import SLUG_ALPHABET, new_slug
+    from app.models import Document
+
+    login(client, AUTHOR)
+    doc_id = make_document(client, title="A paper")
+    db = SessionLocal()
+    doc = db.get(Document, doc_id)
+    doc.slug = new_slug(lambda c: False)
+    slug = doc.slug
+    db.commit()
+    db.close()
+
+    assert len(slug) == 8
+    assert all(ch in SLUG_ALPHABET for ch in slug)
+
+    by_slug = client.get(f"/api/documents/{slug}").json()
+    assert by_slug["title"] == "A paper"
+    assert by_slug["slug"] == slug
+    # older numeric links keep working
+    assert client.get(f"/api/documents/{doc_id}").json()["slug"] == slug
+    assert client.get("/api/documents/nosuchcode").status_code == 404
