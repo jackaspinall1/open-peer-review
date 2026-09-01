@@ -20,6 +20,11 @@ WINDOW_DAYS = 14
 EXTENSION_DAYS = 7
 MAX_WINDOW_DAYS = 28  # about a month: past this, "no engagement" is the honest answer
 
+# Extending is only offered in the closing days of a window. A deadline you can
+# postpone on day one is not a deadline, and the question "do I need longer?"
+# cannot honestly be answered until the window has nearly run.
+EXTEND_FROM_DAYS_LEFT = 3
+
 
 def _aware(dt: datetime | None) -> datetime | None:
     """SQLite returns naive datetimes; treat them as UTC."""
@@ -64,10 +69,16 @@ def extend_round(db: Session, doc: Document) -> ReviewRound:
     rnd = open_round_for(db, doc)
     if rnd is None:
         raise ValueError("No review round is open")
-    total = (_aware(rnd.closes_at) - _aware(rnd.opened_at)).days
+    closes = _aware(rnd.closes_at)
+    remaining_days = (closes - utcnow()).total_seconds() / 86400
+    if remaining_days > EXTEND_FROM_DAYS_LEFT:
+        raise ValueError(
+            f"A round can only be extended in its last {EXTEND_FROM_DAYS_LEFT} days"
+        )
+    total = (closes - _aware(rnd.opened_at)).days
     if total + EXTENSION_DAYS > MAX_WINDOW_DAYS:
         raise ValueError(f"A round cannot run longer than {MAX_WINDOW_DAYS} days")
-    rnd.closes_at = _aware(rnd.closes_at) + timedelta(days=EXTENSION_DAYS)
+    rnd.closes_at = closes + timedelta(days=EXTENSION_DAYS)
     rnd.extensions += 1
     db.commit()
     return rnd
@@ -94,9 +105,13 @@ def summarise(db: Session, doc: Document) -> dict | None:
         "opened_at": _aware(rnd.opened_at).isoformat(),
         "closes_at": closes.isoformat(),
         "open": is_open,
-        "days_left": max(0, -(-remaining.total_seconds() // 86400)) if is_open else 0,
+        "days_left": int(max(0, -(-remaining.total_seconds() // 86400))) if is_open else 0,
         "extensions": rnd.extensions,
-        "extendable": is_open and (closes - _aware(rnd.opened_at)).days + EXTENSION_DAYS <= MAX_WINDOW_DAYS,
+        "extendable": (
+            is_open
+            and remaining.total_seconds() / 86400 <= EXTEND_FROM_DAYS_LEFT
+            and (closes - _aware(rnd.opened_at)).days + EXTENSION_DAYS <= MAX_WINDOW_DAYS
+        ),
         "comment_count": len(comments),
         "reviewer_count": len({c.user_id for c in comments}),
     }

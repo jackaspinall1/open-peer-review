@@ -8,7 +8,7 @@ from datetime import timedelta
 
 from app import rounds
 from app.db import SessionLocal
-from app.models import ReviewRound
+from app.models import ReviewRound, utcnow
 from conftest import comment, login, make_document
 
 AUTHOR = "0000-0002-1825-0097"
@@ -20,6 +20,22 @@ def _shift_close(doc_id, **delta):
     db = SessionLocal()
     rnd = db.query(ReviewRound).filter(ReviewRound.document_id == doc_id).one()
     rnd.closes_at = rounds._aware(rnd.closes_at) + timedelta(**delta)
+    db.commit()
+    db.close()
+
+
+def _set_window(doc_id, opened_days_ago, closes_in_days):
+    """Place a round's window explicitly.
+
+    The total span is measured from opened_at, so moving only the close date
+    shortens the window rather than ageing it, and the month cap would never be
+    reached.
+    """
+    now = utcnow()
+    db = SessionLocal()
+    rnd = db.query(ReviewRound).filter(ReviewRound.document_id == doc_id).one()
+    rnd.opened_at = now - timedelta(days=opened_days_ago)
+    rnd.closes_at = now + timedelta(days=closes_in_days)
     db.commit()
     db.close()
 
@@ -51,17 +67,45 @@ def test_cannot_open_two_rounds_at_once(client):
     assert client.post(f"/api/documents/{doc}/rounds").status_code == 422
 
 
-def test_extends_in_weekly_steps_and_stops_at_a_month(client):
+def test_a_fresh_window_cannot_be_extended(client):
+    """A deadline you can postpone on day one is not a deadline."""
+    login(client, AUTHOR)
+    doc = make_document(client)
+    opened = client.post(f"/api/documents/{doc}/rounds").json()
+    assert opened["days_left"] == rounds.WINDOW_DAYS
+    assert opened["extendable"] is False
+    r = client.post(f"/api/documents/{doc}/rounds/extend")
+    assert r.status_code == 422
+    assert "last 3 days" in r.json()["detail"]
+
+
+def test_extends_in_weekly_steps_once_the_window_is_nearly_up(client):
     login(client, AUTHOR)
     doc = make_document(client)
     client.post(f"/api/documents/{doc}/rounds")
+
+    _shift_close(doc, days=-12)                    # two days left
+    assert client.get(f"/api/documents/{doc}").json()["round"]["extendable"] is True
     first = client.post(f"/api/documents/{doc}/rounds/extend").json()
-    assert first["days_left"] == rounds.WINDOW_DAYS + rounds.EXTENSION_DAYS
+    assert first["extensions"] == 1
+    assert first["extendable"] is False            # a week of runway again
+
+    _shift_close(doc, days=-6)                     # back into the closing days
     second = client.post(f"/api/documents/{doc}/rounds/extend").json()
     assert second["extensions"] == 2
-    assert second["days_left"] == rounds.MAX_WINDOW_DAYS
-    assert second["extendable"] is False
-    assert client.post(f"/api/documents/{doc}/rounds/extend").status_code == 422
+
+
+def test_a_round_is_capped_at_a_month(client):
+    login(client, AUTHOR)
+    doc = make_document(client)
+    client.post(f"/api/documents/{doc}/rounds")
+    # A window already 28 days long, with two days to run: in the extendable
+    # period, but another week would exceed the cap.
+    _set_window(doc, opened_days_ago=rounds.MAX_WINDOW_DAYS - 2, closes_in_days=2)
+    assert client.get(f"/api/documents/{doc}").json()["round"]["extendable"] is False
+    r = client.post(f"/api/documents/{doc}/rounds/extend")
+    assert r.status_code == 422
+    assert "longer than" in r.json()["detail"]
 
 
 def test_comments_are_stamped_with_the_open_round_and_counted(client):

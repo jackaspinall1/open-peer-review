@@ -106,9 +106,13 @@ opens a round explicitly, which is also the moment to go and ask colleagues to
 look, since a direct request from an author is the highest-converting message in
 the whole system.
 
-- **Two weeks**, extendable a week at a time up to a month when engagement is
-  thin. There is no deadline on the author afterwards: revising is their own
-  work, and "revise within 30 days" is a journal pathology this avoids.
+- **Two weeks**, and there is no deadline on the author afterwards: revising is
+  their own work, and "revise within 30 days" is a journal pathology this avoids.
+- Extending is possible **only in the last three days** of a window, a week at a
+  time, up to a month in total. A deadline you can postpone on day one is not a
+  deadline, and whether you actually need longer cannot be answered honestly
+  until the window has nearly run. Taking an extension asks for confirmation and
+  says that it will appear on the review record, because it does.
 - The author's only discretionary lever **increases scrutiny**: they can extend
   but never close early, so no rules are needed about who deserves an extension.
 - **The window bounds the record, not the page.** Comments posted after it are

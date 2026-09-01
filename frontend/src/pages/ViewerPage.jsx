@@ -198,7 +198,17 @@ export default function ViewerPage() {
         )}
         {doc.can_manage && doc.round?.open && doc.round.extendable && (
           <button className="linkbtn revisionbtn" disabled={roundBusy}
-            onClick={() => roundAction('rounds/extend', 'Extended by a week.')}>
+            onClick={() => {
+              // Extensions are recorded on the review record, so say so before
+              // taking one rather than after.
+              const ok = window.confirm(
+                `Extend this review window by a week?\n\n` +
+                `It closes in ${doc.round.days_left} day${doc.round.days_left === 1 ? '' : 's'}. ` +
+                `Extensions are shown on the paper's review record, so a round that ran long ` +
+                `is visible to readers.`,
+              )
+              if (ok) roundAction('rounds/extend', 'Extended by a week.')
+            }}>
             Extend by a week
           </button>
         )}
