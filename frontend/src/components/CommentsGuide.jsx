@@ -1,13 +1,18 @@
 import CoiBadge, { ExpertiseBadge } from './CoiBadge'
 
 /**
- * Shown in the sidebar while a paper has no comments.
+ * Shown in the sidebar on someone's first paper, and while a paper has no
+ * comments at all.
+ *
+ * Dismissing it is remembered in the browser rather than on the server: it is a
+ * display preference, it should work for readers who never sign in, and nothing
+ * about it needs to leave the machine.
  *
  * The empty space is the best place to explain how commenting works, and the
  * badges are easier to show than to describe, so these are the real components
  * rendered with example values.
  */
-export default function CommentsGuide() {
+export default function CommentsGuide({ onDismiss }) {
   return (
     <div className="guide">
       <p>
@@ -45,6 +50,10 @@ export default function CommentsGuide() {
         Say what is wrong with the argument, the method or the evidence. Describe what you observe
         rather than what you conclude about the authors.
       </p>
+
+      {onDismiss && (
+        <button className="primary small" onClick={onDismiss}>Got it</button>
+      )}
     </div>
   )
 }

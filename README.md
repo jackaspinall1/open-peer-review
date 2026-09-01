@@ -251,14 +251,19 @@ who reads what, tied to a verified ORCID iD, would be more revealing than a
 record of what someone chose to say, and would deter exactly the cautious
 reviewer this depends on.
 
-## The empty sidebar teaches
+## The sidebar teaches
 
-Before a paper has comments, the sidebar explains commenting rather than sitting
-empty: how to anchor a comment, what the badges mean, that reviewers are
-pseudonymous per paper, and the one conduct rule. The badges are the real
-components rendered with example values, because showing them is clearer than
-describing them and cannot drift out of date. It disappears as soon as there is
-a comment to read instead.
+The comment sidebar explains commenting on someone's first paper, and on any
+paper that has no comments yet: how to anchor a comment, what the badges mean,
+that reviewers are pseudonymous within a paper and unlinkable across them, and
+the one conduct rule. The badges are the real components rendered with example
+values, because showing them is clearer than describing them and cannot drift
+out of date.
+
+It can be dismissed, which is remembered in the browser rather than on the
+server: it is a display preference, it should work for readers who never sign
+in, and nothing about it needs to leave the machine. A paper with no comments
+keeps showing it, since there is nothing else to read there.
 
 ## Moderation
 

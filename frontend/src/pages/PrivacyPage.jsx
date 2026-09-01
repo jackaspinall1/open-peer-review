@@ -31,7 +31,9 @@ export default function PrivacyPage() {
         <li>
           <strong>A session cookie</strong>, signed, containing only an internal account number.
           There is no advertising, no third-party analytics or tracking of any kind, and no
-          externally hosted fonts. Nothing about your visit leaves this server.
+          externally hosted fonts. Nothing about your visit leaves this server. Dismissing the
+          explanation of how comments work is remembered in your own browser and is not sent
+          anywhere.
         </li>
         <li>
           <strong>Papers added here</strong>, including author names, ORCID iDs and affiliations

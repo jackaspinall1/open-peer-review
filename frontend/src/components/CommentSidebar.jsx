@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useMe } from '../auth'
 import CommentThread from './CommentThread'
@@ -64,7 +64,20 @@ function DraftCard({ draft, onPost, onCancel }) {
   )
 }
 
+const GUIDE_SEEN = 'opr.commentsGuide.dismissed'
+
 export default function CommentSidebar({ comments, docVersion, round, canManage, standing, resolutions, draft, activeId, onPost, onCancelDraft, onVote, onFocus, onStartGeneral, onDelete, onReport }) {
+  const [guideDismissed, setGuideDismissed] = useState(
+    () => localStorage.getItem(GUIDE_SEEN) === '1',
+  )
+  const dismissGuide = useCallback(() => {
+    localStorage.setItem(GUIDE_SEEN, '1')
+    setGuideDismissed(true)
+  }, [])
+  // Explain on someone's first paper, and whenever there is nothing else to
+  // read, but never nag once they have said they have it.
+  const showGuide = !guideDismissed || (comments.length === 0 && !draft)
+
   return (
     <aside className="sidebar">
       <div className="sidebarhead">
@@ -73,7 +86,13 @@ export default function CommentSidebar({ comments, docVersion, round, canManage,
       </div>
       <YourStanding standing={standing} />
       {draft && <DraftCard draft={draft} onPost={onPost} onCancel={onCancelDraft} />}
-      {comments.length === 0 && !draft && <CommentsGuide />}
+      {showGuide && <CommentsGuide onDismiss={dismissGuide} />}
+      {!showGuide && comments.length === 0 && !draft && (
+        <p className="muted sidebarhint">
+          Select a sentence in the paper to leave the first comment.
+        </p>
+      )}
+
       {canManage && round?.open && round.days_left <= 3 && round.reviewer_count < 2 && (
         <p className="nudge">
           Your review window closes in {round.days_left} day{round.days_left === 1 ? '' : 's'} and

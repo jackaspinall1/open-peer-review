@@ -241,6 +241,8 @@ h2 { font-size: 16px; margin: 0; }
 }
 .guide p { margin: 0 0 8px; }
 .guidebadges { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+.guide > button { margin-top: 6px; }
+.guide { border-bottom: 1px solid var(--line); padding-bottom: 14px; margin-bottom: 14px; }
 .standing {
   display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
   font-size: 12px; padding: 8px 10px; margin-bottom: 12px;
