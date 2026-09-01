@@ -17,7 +17,7 @@ export default function IndexPage() {
     <main className="page">
       <h1>Papers under review</h1>
       {docs.length === 0 && (
-        <p className="muted">Nothing here yet. <Link to="/upload">Upload the first paper.</Link></p>
+        <p className="muted">Nothing here yet. <Link to="/me">Add one of your preprints.</Link></p>
       )}
       <ul className="doclist">
         {docs.map((d) => (

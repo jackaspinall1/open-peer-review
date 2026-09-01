@@ -157,7 +157,9 @@ privacy obligations that brings.
 ## The author's page
 
 Clicking your name opens your own papers, matched by ORCID rather than by who
-uploaded them, split into those under review and those whose window has closed.
+added them. It is the only place a paper is added, and its sections follow the
+life of one: **your other preprints**, which you can add for review, then
+**under review**, then **past reviews**.
 Past entries link to the final version on the preprint server and, once round
 deposits exist, to the citable review record.
 

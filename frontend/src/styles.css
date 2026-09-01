@@ -102,6 +102,10 @@ h2 { font-size: 16px; margin: 0; }
 .warranty { border-left: 2px solid var(--line); padding-left: 10px; }
 
 .worklist { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-direction: column; gap: 10px; }
+/* When the list is itself the card, it has to supply the card's padding: its
+   own `padding: 0` would otherwise win and leave the text on the edges. */
+.worklist.card { padding: 6px 20px 16px; }
+.worklist.card > li:first-child { border-top: none; padding-top: 10px; }
 .worklist li {
   display: flex; justify-content: space-between; align-items: center; gap: 16px;
   border-top: 1px solid var(--line); padding-top: 10px;

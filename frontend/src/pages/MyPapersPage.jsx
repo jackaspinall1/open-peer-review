@@ -107,20 +107,16 @@ export default function MyPapersPage() {
         </>
       )}
 
-      <h2 className="sectionhead">Under review</h2>
-      {data.under_review.length === 0 ? (
-        <p className="muted">
-          Nothing under review. <Link to="/upload">Add one of your preprints</Link> to open a window.
-        </p>
-      ) : (
-        <ul className="doclist">
-          {data.under_review.map((p) => <PaperRow key={p.id} p={p} />)}
-        </ul>
-      )}
-
       <h2 className="sectionhead">Your other preprints</h2>
       {worksError && <p className="error">{worksError}</p>}
       {works === null && !worksError && <p className="muted">Looking up your preprints…</p>}
+      {works && works.filter((w) => !w.document_id).length > 0 && (
+        <p className="formnote warranty">
+          By adding a paper you confirm you have the right to post it here on behalf of its
+          co-authors. Any listed author can contact us about a paper posted without their
+          agreement.
+        </p>
+      )}
       {works?.filter((w) => !w.document_id).length === 0 && (
         <p className="muted">
           Every preprint under your ORCID iD is already here. New ones take a few days to be
@@ -152,6 +148,17 @@ export default function MyPapersPage() {
               </button>
             </li>
           ))}
+        </ul>
+      )}
+
+      <h2 className="sectionhead">Under review</h2>
+      {data.under_review.length === 0 ? (
+        <p className="muted">
+          Nothing under review yet. Add one of your preprints above, then open a review window on it.
+        </p>
+      ) : (
+        <ul className="doclist">
+          {data.under_review.map((p) => <PaperRow key={p.id} p={p} />)}
         </ul>
       )}
 
