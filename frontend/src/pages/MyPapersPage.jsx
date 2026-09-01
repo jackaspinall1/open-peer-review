@@ -107,6 +107,17 @@ export default function MyPapersPage() {
         </>
       )}
 
+      <h2 className="sectionhead">Under review</h2>
+      {data.under_review.length === 0 ? (
+        <p className="muted">
+          Nothing under review yet. Add one of your preprints above, then open a review window on it.
+        </p>
+      ) : (
+        <ul className="doclist">
+          {data.under_review.map((p) => <PaperRow key={p.id} p={p} />)}
+        </ul>
+      )}
+
       <h2 className="sectionhead">Your other preprints</h2>
       {worksError && <p className="error">{worksError}</p>}
       {works === null && !worksError && <p className="muted">Looking up your preprints…</p>}
@@ -148,17 +159,6 @@ export default function MyPapersPage() {
               </button>
             </li>
           ))}
-        </ul>
-      )}
-
-      <h2 className="sectionhead">Under review</h2>
-      {data.under_review.length === 0 ? (
-        <p className="muted">
-          Nothing under review yet. Add one of your preprints above, then open a review window on it.
-        </p>
-      ) : (
-        <ul className="doclist">
-          {data.under_review.map((p) => <PaperRow key={p.id} p={p} />)}
         </ul>
       )}
 
