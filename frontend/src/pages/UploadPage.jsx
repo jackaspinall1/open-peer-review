@@ -29,7 +29,7 @@ export default function AddPaperPage() {
 
   if (me && !me.logged_in) {
     return (
-      <main className="page narrow">
+      <main className="page">
         <h1>Add a paper</h1>
         <p className="muted">You need to <Link to="/login">sign in with ORCID</Link> to add a paper.</p>
       </main>
@@ -49,7 +49,7 @@ export default function AddPaperPage() {
   }
 
   return (
-    <main className="page narrow">
+    <main className="page">
       <h1>Add a paper</h1>
       <p className="muted">
         You can add your own preprints, matched to your ORCID iD. Papers here are always submitted

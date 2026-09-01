@@ -103,10 +103,15 @@ h2 { font-size: 16px; margin: 0; }
 
 .worklist { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-direction: column; gap: 10px; }
 .worklist li {
-  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  display: flex; justify-content: space-between; align-items: center; gap: 16px;
   border-top: 1px solid var(--line); padding-top: 10px;
 }
-.worktitle { display: block; font-size: 14px; font-weight: 600; }
+/* The title column must be allowed to shrink and wrap; without min-width:0 a
+   long title pushes against the button instead, squeezing it until its label
+   wraps and every row ends up a different height. */
+.worklist li > div { min-width: 0; }
+.worklist li > button { flex: none; white-space: nowrap; }
+.worktitle { display: block; font-size: 14px; font-weight: 600; line-height: 1.35; }
 .workmeta { display: block; font-size: 12.5px; color: var(--muted); margin-top: 2px; }
 
 .roundstatus { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
