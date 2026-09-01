@@ -262,8 +262,9 @@ out of date.
 
 It can be dismissed, which is remembered in the browser rather than on the
 server: it is a display preference, it should work for readers who never sign
-in, and nothing about it needs to leave the machine. A paper with no comments
-keeps showing it, since there is nothing else to read there.
+in, and nothing about it needs to leave the machine. Dismissing it applies
+everywhere, including on papers with no comments, where a one-line hint takes
+its place.
 
 ## Moderation
 

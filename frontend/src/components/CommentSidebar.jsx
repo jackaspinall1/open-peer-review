@@ -74,9 +74,9 @@ export default function CommentSidebar({ comments, docVersion, round, canManage,
     localStorage.setItem(GUIDE_SEEN, '1')
     setGuideDismissed(true)
   }, [])
-  // Explain on someone's first paper, and whenever there is nothing else to
-  // read, but never nag once they have said they have it.
-  const showGuide = !guideDismissed || (comments.length === 0 && !draft)
+  // Dismissing has to mean dismissed. Keeping it on empty papers made the
+  // button appear to do nothing; the short hint takes its place there instead.
+  const showGuide = !guideDismissed
 
   return (
     <aside className="sidebar">
