@@ -154,6 +154,14 @@ message. A reviewer learns of a response when they next visit. Reaching people
 who do not return would mean collecting an email address separately, with the
 privacy obligations that brings.
 
+## No directory
+
+The homepage explains how the system works; it does not list papers. Nobody
+browses a repository looking for something to review, and a directory would
+imply a model that does not work. Each paper has its own URL and travels by an
+author asking specific people to look, which is the only invitation that
+reliably gets answered.
+
 ## The author's page
 
 Clicking your name opens your own papers, matched by ORCID rather than by who
