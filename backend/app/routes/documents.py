@@ -255,6 +255,12 @@ def get_document(
     doc = db.get(Document, doc_id)
     if doc is None:
         raise HTTPException(status_code=404, detail="Document not found")
+    # Count the open, unless it is one of the paper's own authors looking at
+    # their own work. No cookie is set and nothing about the visitor is stored:
+    # this is a counter, not analytics.
+    if not can_manage(user, doc):
+        doc.views += 1
+        db.commit()
     # Retrying failed badge checks must not block the read either.
     background.add_task(coi.refresh_pending_detached, doc.id)
     return full_document(db, doc, user)

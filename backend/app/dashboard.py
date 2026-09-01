@@ -71,6 +71,7 @@ def my_papers(db: Session, user: User) -> dict:
             "source_url": doc.source_landing_url or doc.source_pdf_url,
             "source_name": doc.source_name,
             "review_doi": doc.review_doi,
+            "views": doc.views,
             "round": rnd,
             "rounds_held": db.query(ReviewRound).filter(ReviewRound.document_id == doc.id).count(),
             **_counts(db, doc),

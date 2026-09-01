@@ -13,6 +13,11 @@ function Metrics({ p }) {
           <strong>{p.awaiting_response}</strong> awaiting your response
         </span>
       )}
+      {typeof p.views === 'number' && (
+        <span className="muted" title="Page opens, not counting your own. A measure of whether people are arriving, not of quality.">
+          {p.views} page open{p.views === 1 ? '' : 's'}
+        </span>
+      )}
       {p.superseded > 0 && (
         <span className="muted" title="Written against an earlier version, so a revision may already have dealt with them">
           {p.superseded} on an earlier version

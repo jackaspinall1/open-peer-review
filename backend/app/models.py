@@ -40,6 +40,11 @@ class Document(Base):
     license: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     # DOI of the deposited review record, once rounds are archived (see TODO).
     review_doi: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    # Page opens, excluding the paper's own authors. Operator and author
+    # telemetry only: it answers "is anyone looking at this", which is a
+    # question about distribution rather than about quality, and it is never
+    # shown publicly because a view count measures promotion, not scrutiny.
+    views: Mapped[int] = mapped_column(Integer, default=0)
     pdf_sha256: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     uploaded_by: Mapped[Optional[int]] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True

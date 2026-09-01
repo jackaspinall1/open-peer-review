@@ -130,6 +130,10 @@ def full_document(db: Session, doc: Document, me: Optional[User]) -> dict:
     from .routes.documents import can_manage
 
     out["can_manage"] = can_manage(me, doc) if me is not None else False
+    # Only the paper's own authors see how many times it was opened. It is a
+    # distribution signal for them, not a public score.
+    if out["can_manage"]:
+        out["views"] = doc.views
     out["has_source"] = bool(doc.source_pdf_url)
     from . import rounds as _rounds
 

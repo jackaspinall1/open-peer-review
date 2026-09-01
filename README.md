@@ -209,6 +209,23 @@ currently a manual one: download the Markdown, deposit it, and put the DOI in
 `documents.review_doi`. Automating that is in TODO.md, deliberately after the
 first round rather than before it.
 
+## Page opens
+
+Each paper carries a count of how many times it has been opened, excluding its
+own authors, visible only to those authors. It answers "is anyone arriving",
+which is a question about distribution rather than about quality: if you send a
+link to five colleagues and the page is opened twice, the problem is the ask.
+
+It is deliberately not public and deliberately not a metric. A view count
+measures promotion rather than scrutiny, and displayed on a paper it would
+become an authoritative-looking number answering a question nobody asked.
+
+It is also not analytics. There is no third-party service, no cookie set for it,
+nothing recorded about the visitor and no per-person reading history. A record of
+who reads what, tied to a verified ORCID iD, would be more revealing than a
+record of what someone chose to say, and would deter exactly the cautious
+reviewer this depends on.
+
 ## Moderation
 
 Deliberately minimal and reversible, because gates are what make review systems

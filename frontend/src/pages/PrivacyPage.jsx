@@ -30,14 +30,19 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>A session cookie</strong>, signed, containing only an internal account number.
-          There is no analytics, no advertising, no third-party tracking and no externally hosted
-          fonts.
+          There is no advertising, no third-party analytics or tracking of any kind, and no
+          externally hosted fonts. Nothing about your visit leaves this server.
         </li>
         <li>
           <strong>Papers added here</strong>, including author names, ORCID iDs and affiliations
           that come with them from public scholarly records. Those authors may not use this site.
         </li>
         <li><strong>Server logs</strong>, which include IP addresses, kept only to operate the service.</li>
+        <li>
+          <strong>A count of how many times each paper is opened.</strong> A single number per
+          paper, visible only to its authors, so they can tell whether anyone is arriving. Nothing
+          about the visitor is recorded, no cookie is set for it, and it is not linked to you.
+        </li>
       </ul>
 
       <h2>Pseudonymous, not anonymous</h2>

@@ -158,3 +158,38 @@ def test_standing_requires_login(client):
     doc = make_document(client)
     logout(client)
     assert client.get(f"/api/documents/{doc}/my-relationship").status_code == 401
+
+
+def test_page_opens_are_counted_but_not_the_authors_own(client):
+    """Telemetry about distribution, not a public score.
+
+    Counting the author's own visits would answer the wrong question: they want
+    to know whether anyone else is looking.
+    """
+    login(client, AUTHOR)
+    doc = make_document(client, authors=[{"name": "Ada", "orcid": AUTHOR}])
+    for _ in range(3):
+        client.get(f"/api/documents/{doc}")
+    assert client.get(f"/api/documents/{doc}").json()["views"] == 0
+
+    login(client, REVIEWER)
+    client.get(f"/api/documents/{doc}")
+    client.get(f"/api/documents/{doc}")
+    from conftest import logout
+
+    logout(client)
+    client.get(f"/api/documents/{doc}")          # signed out counts too
+
+    login(client, AUTHOR)
+    assert client.get(f"/api/documents/{doc}").json()["views"] == 3
+
+
+def test_the_view_count_is_never_public(client):
+    login(client, AUTHOR)
+    doc = make_document(client, authors=[{"name": "Ada", "orcid": AUTHOR}])
+    login(client, REVIEWER)
+    assert "views" not in client.get(f"/api/documents/{doc}").json()
+    from conftest import logout
+
+    logout(client)
+    assert "views" not in client.get(f"/api/documents/{doc}").json()
