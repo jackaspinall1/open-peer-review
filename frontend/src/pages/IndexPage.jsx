@@ -19,9 +19,8 @@ export default function IndexPage() {
         <li>Log in with ORCID.</li>
         <li>Add one of your preprints and share the link.</li>
         <li>
-          Reviewers comment, either on specific highlighted text or on the paper as a whole. Their
-          relationship to the authors and their expertise are calculated from their ORCID. All
-          reviews are pseudonymous.
+          Reviewers comment pseudonymously, on a highlighted sentence or the paper as a whole.
+          Their relationship to the authors and their expertise are calculated from their ORCID.
         </li>
         <li>Review concludes after 14 days, with the option for authors to extend.</li>
         <li>
