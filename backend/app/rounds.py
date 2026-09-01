@@ -14,7 +14,7 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
-from .models import Comment, Document, ReviewRound, User, utcnow
+from .models import Comment, Document, ReviewRound, utcnow
 
 WINDOW_DAYS = 14
 EXTENSION_DAYS = 7

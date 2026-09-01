@@ -20,7 +20,11 @@ export default function AddPaperPage() {
 
   useEffect(() => {
     if (!me?.orcid) return
-    get('/api/documents/my-works').then((r) => setWorks(r.works)).catch(() => setWorks([]))
+    get('/api/documents/my-works')
+      .then((r) => setWorks(r.works))
+      // Do not swallow this into an empty list: "you have no preprints" and
+      // "the lookup failed" are different things and look identical if we do.
+      .catch((e) => { setError(e.message); setWorks(null) })
   }, [me?.orcid])
 
   if (me && !me.logged_in) {
@@ -52,7 +56,8 @@ export default function AddPaperPage() {
         for review by one of their authors.
       </p>
 
-      {works === null && <p className="muted">Looking up your preprints…</p>}
+      {error && <p className="error">{error}</p>}
+      {works === null && !error && <p className="muted">Looking up your preprints…</p>}
 
       {works?.length > 0 && (
         <section className="card">

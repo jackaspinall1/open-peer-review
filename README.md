@@ -517,6 +517,12 @@ the last one. Keep copies off the host.
 cd backend && .venv/bin/python -m pytest tests -q
 ```
 
+`tests/test_lint.py` runs pyflakes over the package and fails on undefined names
+and stray unused imports. That is there because editing has three times silently
+removed a function other code still called, and the suite did not notice: the
+calling paths needed the network and were stubbed out. A name that does not
+exist is worth catching without running anything.
+
 `tests/test_anonymity.py` asserts the product's central promise: that public
 payloads never carry a name, ORCID, institution or work count, and that aliases
 do not link a person across papers. These are the regressions that would be

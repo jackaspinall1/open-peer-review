@@ -8,7 +8,7 @@ from datetime import timedelta
 
 from app import rounds
 from app.db import SessionLocal
-from app.models import Document, ReviewRound
+from app.models import ReviewRound
 from conftest import comment, login, make_document
 
 AUTHOR = "0000-0002-1825-0097"

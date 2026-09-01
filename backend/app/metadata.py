@@ -65,6 +65,28 @@ PREPRINT_SOURCES = (
 )
 
 
+def pdf_candidates(work: dict) -> list[dict]:
+    """Fetchable PDF locations, repositories first.
+
+    Publisher sites (RSC, Elsevier, Wiley) routinely 403 automated requests even
+    for open-access articles; arXiv/Research Square/PMC copies do not.
+    """
+    cands = []
+    for loc in work.get("locations") or []:
+        if not loc.get("pdf_url"):
+            continue
+        src = loc.get("source") or {}
+        cands.append({
+            "url": loc["pdf_url"],
+            "landing_url": loc.get("landing_page_url"),
+            "source": src.get("display_name"),
+            "license": loc.get("license"),
+            "is_repository": src.get("type") == "repository",
+        })
+    cands.sort(key=lambda c: not c["is_repository"])
+    return cands
+
+
 def _is_preprint(work: dict, cand: dict) -> bool:
     if work.get("type") == "preprint":
         return True
@@ -96,6 +118,7 @@ def list_importable_works(orcid: str) -> list[dict]:
             continue
         out.append({
             "openalex_id": w["id"].rsplit("/", 1)[-1],
+            "document_id": None,   # filled in by the route: already added or not
             "title": w.get("title"),
             "year": w.get("publication_year"),
             "type": w.get("type"),

@@ -5,7 +5,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from ..auth import get_current_user, require_user
+from ..auth import require_user
 from ..coi import compute_alias_badges, get_or_create_alias
 from ..rounds import open_round_for
 from ..db import get_db

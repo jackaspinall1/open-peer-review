@@ -1,7 +1,7 @@
 import json
 import uuid
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -15,7 +15,7 @@ from .. import coi, config, metadata, ratelimit, rounds
 from ..auth import require_user
 from ..db import get_db
 from ..models import Comment, Document, DocumentAuthor, User
-from ..auth import get_current_user, normalize_orcid
+from ..auth import get_current_user
 from ..serialize import document_summary, full_document
 
 router = APIRouter(prefix="/api/documents")
@@ -55,9 +55,21 @@ def my_papers(user: User = Depends(require_user), db: Session = Depends(get_db))
 
 
 @router.get("/my-works")
-def my_works(user: User = Depends(require_user)):
+def my_works(user: User = Depends(require_user), db: Session = Depends(get_db)):
+    def _mark_added(works: list[dict]) -> list[dict]:
+        """Flag the ones already here, so the caller can offer the right action."""
+        ids = {w["openalex_id"] for w in works}
+        if ids:
+            existing = {
+                d.openalex_id: d.id
+                for d in db.query(Document).filter(Document.openalex_id.in_(ids)).all()
+            }
+            for w in works:
+                w["document_id"] = existing.get(w["openalex_id"])
+        return works
+
     try:
-        return {"works": metadata.list_importable_works(user.orcid)}
+        return {"works": _mark_added(metadata.list_importable_works(user.orcid))}
     except Exception as exc:
         busy = "429" in str(exc)
         raise HTTPException(

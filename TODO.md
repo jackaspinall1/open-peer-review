@@ -198,6 +198,9 @@ the scenario that produces letters.
 
 ## Review mechanics
 
+- [x] Author page lists the preprints not yet added, with an Add button, so
+      papers can be added from the one place that already shows your work
+
 - [x] Notify a reviewer in-app when their comment is replied to (count beside
       the name, list on their own page)
 - [ ] Email notification would reach reviewers who do not return, but needs an

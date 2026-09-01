@@ -145,7 +145,7 @@ def test_silent_viewers_do_not_consume_reviewer_numbers(client):
     """Two people look, one comments: they are Reviewer 1, not Reviewer 3."""
     login(client, AUTHOR)
     doc = make_document(client, authors=[{"name": "Ada", "orcid": AUTHOR}])
-    for who in (REVIEWER, BYSTANDER := "0000-0002-0000-0004"):
+    for who in (REVIEWER, "0000-0002-0000-0004"):
         login(client, who)
         client.get(f"/api/documents/{doc}/my-relationship")
     login(client, "0000-0002-0000-0005")

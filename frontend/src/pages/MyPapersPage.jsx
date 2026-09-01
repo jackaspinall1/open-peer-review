@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { get, postJSON } from '../api'
 import { useMe } from '../auth'
 import RoundStatus from '../components/RoundStatus'
@@ -53,13 +53,20 @@ function PaperRow({ p, past }) {
 
 export default function MyPapersPage() {
   const { me, refreshUnread } = useMe()
+  const navigate = useNavigate()
   const [data, setData] = useState(null)
   const [notes, setNotes] = useState(null)
+  const [works, setWorks] = useState(null)
+  const [worksError, setWorksError] = useState(null)
+  const [importing, setImporting] = useState(null)
   const [error, setError] = useState(null)
 
   useEffect(() => {
     if (!me?.orcid) return
     get('/api/documents/mine').then(setData).catch((e) => setError(e.message))
+    get('/api/documents/my-works')
+      .then((r) => setWorks(r.works))
+      .catch((e) => setWorksError(e.message))
     get('/api/notifications')
       .then((r) => {
         setNotes(r.notifications)
@@ -108,6 +115,43 @@ export default function MyPapersPage() {
       ) : (
         <ul className="doclist">
           {data.under_review.map((p) => <PaperRow key={p.id} p={p} />)}
+        </ul>
+      )}
+
+      <h2 className="sectionhead">Your other preprints</h2>
+      {worksError && <p className="error">{worksError}</p>}
+      {works === null && !worksError && <p className="muted">Looking up your preprints…</p>}
+      {works?.filter((w) => !w.document_id).length === 0 && (
+        <p className="muted">
+          Every preprint under your ORCID iD is already here. New ones take a few days to be
+          indexed after posting.
+        </p>
+      )}
+      {works && works.filter((w) => !w.document_id).length > 0 && (
+        <ul className="worklist card">
+          {works.filter((w) => !w.document_id).map((w) => (
+            <li key={w.openalex_id}>
+              <div>
+                <span className="worktitle">{w.title}</span>
+                <span className="workmeta">
+                  {[w.year, w.source].filter(Boolean).join(' · ')}
+                  {!w.likely_fetchable && ' · publisher may block automatic download'}
+                </span>
+              </div>
+              <button className="primary small" disabled={!!importing} onClick={async () => {
+                setImporting(w.openalex_id)
+                try {
+                  const { id } = await postJSON('/api/documents/import', { openalex_id: w.openalex_id })
+                  navigate(`/doc/${id}`)
+                } catch (e) {
+                  setWorksError(e.message)
+                  setImporting(null)
+                }
+              }}>
+                {importing === w.openalex_id ? 'Adding…' : 'Add for review'}
+              </button>
+            </li>
+          ))}
         </ul>
       )}
 

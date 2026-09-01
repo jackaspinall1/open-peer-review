@@ -4,7 +4,6 @@ A second copy of a paper would split the review in two, which defeats the point.
 Control belongs to any listed author rather than to whoever added it first,
 otherwise a non-author could add a paper and lock its authors out.
 """
-import json
 
 from app.metadata import normalise_doi
 from conftest import login, make_document
