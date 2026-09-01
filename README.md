@@ -188,6 +188,27 @@ The last is a hint, not a claim. A real resolved/unresolved state needs the
 comment typing and state vector in TODO.md, and the client reporting whether an
 anchor still resolves.
 
+## The record a round produces
+
+A closed window leaves an artifact rather than a greyed-out status bar. Any
+paper offers its review record at `/api/documents/{id}/record`, as JSON or as
+Markdown with `?format=md`, and the closed-round bar and the author's page both
+link to it.
+
+The record is self-contained: the paper and the version reviewed, the window and
+how much scrutiny it drew, and every thread with its criticism, the author's
+answer and what happened to the quoted text. It carries no internal identifiers
+and no identities, uses the same words a reader sees rather than status codes,
+and states plainly that no resolution verdict is asserted. Withdrawn comments
+are absent rather than tombstoned: a live page should show that something was
+removed, an archive should not preserve what was withdrawn.
+
+It is public, needing no account, because the record is the point of the
+exercise. Depositing it somewhere permanent with a DOI is the next step and is
+currently a manual one: download the Markdown, deposit it, and put the DOI in
+`documents.review_doi`. Automating that is in TODO.md, deliberately after the
+first round rather than before it.
+
 ## Moderation
 
 Deliberately minimal and reversible, because gates are what make review systems

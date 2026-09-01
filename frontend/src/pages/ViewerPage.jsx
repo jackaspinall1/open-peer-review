@@ -187,7 +187,7 @@ export default function ViewerPage() {
                 Original on {doc.source_name || 'the preprint server'} ↗
               </a>
             )}
-            <RoundStatus round={doc.round} />
+            <RoundStatus round={doc.round} documentId={doc.id} />
           </div>
         </div>
         {doc.can_manage && !doc.round?.open && (

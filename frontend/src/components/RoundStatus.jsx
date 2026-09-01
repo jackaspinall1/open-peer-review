@@ -12,7 +12,7 @@ function fmt(iso) {
   return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
 }
 
-export default function RoundStatus({ round }) {
+export default function RoundStatus({ round, documentId }) {
   if (!round) return null
 
   const opened = new Date(round.opened_at).getTime()
@@ -33,6 +33,11 @@ export default function RoundStatus({ round }) {
       <span className="timeline" aria-hidden="true">
         <span className="timeline-fill" style={{ width: `${elapsed * 100}%` }} />
       </span>
+      {!round.open && documentId && (
+        <a className="recordlink" href={`/api/documents/${documentId}/record?format=md`}>
+          Review record ↓
+        </a>
+      )}
       {round.open ? (
         <span className={left <= 3 ? 'urgent' : undefined}>
           {left} day{left === 1 ? '' : 's'} left

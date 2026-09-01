@@ -214,8 +214,11 @@ the scenario that produces letters.
       traditional review surfaces, and it removes the satisfaction step, the
       notification email it depended on (ORCID gives us no address), and the
       need for comment typing
-- [ ] Deposit closed rounds to Zenodo and store the DOI in documents.review_doi
-      (the column and the author-page link already exist, unpopulated)
+- [x] A round produces a downloadable record (JSON and Markdown), linked from
+      the closed-round bar and the author page
+- [ ] Deposit that record to Zenodo automatically and store the DOI in
+      documents.review_doi. Deliberately manual for the first rounds: doing it
+      by hand will show what the artifact should actually contain
 
 - [x] Zoom inside the PDF column only (re-render, not CSS transform, so figures
       stay sharp); fixed a latent bug where text-layer spans never scaled,

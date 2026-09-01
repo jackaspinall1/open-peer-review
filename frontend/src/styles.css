@@ -121,6 +121,8 @@ h2 { font-size: 16px; margin: 0; }
 .roundstatus { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
 .roundstatus .urgent { color: #a12b22; font-weight: 600; }
 .roundstatus.closed { color: var(--muted); }
+.recordlink { color: var(--accent); text-decoration: none; font-weight: 600; }
+.recordlink:hover { text-decoration: underline; }
 .timeline {
   display: inline-block; width: 64px; height: 4px; border-radius: 2px;
   background: var(--line); overflow: hidden; vertical-align: middle;

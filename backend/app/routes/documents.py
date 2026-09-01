@@ -2,7 +2,7 @@ import json
 import uuid
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -11,7 +11,7 @@ import json as _json
 
 from pydantic import BaseModel
 
-from .. import coi, config, metadata, ratelimit, rounds
+from .. import coi, config, metadata, ratelimit, record, rounds
 from ..auth import require_user
 from ..db import get_db
 from ..models import Comment, Document, DocumentAuthor, User
@@ -288,6 +288,31 @@ def my_relationship(
         ),
         "has_commented": rel.alias_number is not None,
     }
+
+
+@router.get("/{doc_id}/record")
+def review_record(doc_id: int, format: str = "json", db: Session = Depends(get_db)):
+    """The artifact a review round leaves behind, in JSON or Markdown.
+
+    Public: the record is the point of the exercise, and anyone should be able
+    to take a copy without an account.
+    """
+    doc = db.get(Document, doc_id)
+    if doc is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+    built = record.build(db, doc, config.FRONTEND_URL.rstrip("/"))
+    stem = f"review-record-{doc.id}-v{doc.version}"
+    if format == "md":
+        return Response(
+            content=record.to_markdown(built),
+            media_type="text/markdown; charset=utf-8",
+            headers={"Content-Disposition": f'attachment; filename="{stem}.md"'},
+        )
+    return Response(
+        content=_json.dumps(built, indent=2, ensure_ascii=False),
+        media_type="application/json",
+        headers={"Content-Disposition": f'attachment; filename="{stem}.json"'},
+    )
 
 
 @router.get("/{doc_id}/pdf")

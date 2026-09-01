@@ -28,10 +28,15 @@ function PaperRow({ p, past }) {
       <Link to={`/doc/${p.id}`} className="doctitle">{p.title}</Link>
       <div className="docmeta">
         <span>v{p.version}</span>
-        {p.round ? <RoundStatus round={p.round} /> : <span className="muted">No review window open yet</span>}
+        {p.round ? <RoundStatus round={p.round} documentId={p.id} /> : <span className="muted">No review window open yet</span>}
         {p.source_url && (
           <a className="sourcelink" href={p.source_url} target="_blank" rel="noreferrer">
             {past ? 'Final version' : 'Original'} on {p.source_name || 'the preprint server'} ↗
+          </a>
+        )}
+        {past && (
+          <a className="sourcelink" href={`/api/documents/${p.id}/record?format=md`}>
+            Download the review record ↓
           </a>
         )}
         {past && (

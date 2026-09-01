@@ -94,7 +94,12 @@ def summarise(db: Session, doc: Document) -> dict | None:
     rnd = current_round(db, doc)
     if rnd is None:
         return None
+    from .serialize import author_user_ids   # imported here to avoid a cycle
+
     comments = db.query(Comment).filter(Comment.round_id == rnd.id).all()
+    # An author replying to criticism is not a reviewer of their own paper, and
+    # counting them would inflate how much scrutiny a round actually drew.
+    authors = author_user_ids(db, doc)
     closes = _aware(rnd.closes_at)
     now = utcnow()
     is_open = closes > now
@@ -113,5 +118,5 @@ def summarise(db: Session, doc: Document) -> dict | None:
             and (closes - _aware(rnd.opened_at)).days + EXTENSION_DAYS <= MAX_WINDOW_DAYS
         ),
         "comment_count": len(comments),
-        "reviewer_count": len({c.user_id for c in comments}),
+        "reviewer_count": len({c.user_id for c in comments if c.user_id not in authors}),
     }
