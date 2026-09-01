@@ -47,10 +47,6 @@ def _secret_key() -> str:
 
 SECRET_KEY = _secret_key()
 
-# "mock" = dev login form only; "orcid" = real ORCID sign-in only (requires a
-# registered public API client); "both" = ORCID button plus the dev form.
-AUTH_MODE = os.environ.get("AUTH_MODE", "mock")
-
 # ORCID OAuth (https://info.orcid.org/documentation/api-tutorials/)
 # Set ORCID_ENV=sandbox to use the sandbox member site.
 ORCID_ENV = os.environ.get("ORCID_ENV", "production")

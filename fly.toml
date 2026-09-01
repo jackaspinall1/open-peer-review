@@ -7,7 +7,6 @@ primary_region = "lhr"
 [env]
   DATA_DIR = "/data"
   STATIC_DIR = "/app/static"
-  AUTH_MODE = "orcid"
   ORCID_ENV = "production"
 
 [[mounts]]

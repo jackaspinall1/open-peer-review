@@ -1,4 +1,9 @@
-"""Login routes (mock + ORCID OAuth) and current-user dependencies."""
+"""ORCID sign-in and current-user dependencies.
+
+There is deliberately no alternative login path: a form that accepts an ORCID
+iD without authenticating it would let anyone post as any researcher, including
+as a paper's author.
+"""
 import re
 import secrets
 from typing import Optional
@@ -7,7 +12,6 @@ from urllib.parse import urlencode
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from . import config
@@ -52,21 +56,6 @@ def _login_as(request: Request, db: Session, orcid: str, name: str) -> User:
         db.commit()
     request.session["user_id"] = user.id
     return user
-
-
-class MockLogin(BaseModel):
-    orcid: str
-
-
-@router.post("/auth/mock/login")
-def mock_login(payload: MockLogin, request: Request, db: Session = Depends(get_db)):
-    if config.AUTH_MODE not in ("mock", "both"):
-        raise HTTPException(status_code=403, detail="Mock login is disabled")
-    orcid = normalize_orcid(payload.orcid)
-    if orcid is None:
-        raise HTTPException(status_code=422, detail="Invalid ORCID iD (expected 0000-0000-0000-0000)")
-    user = _login_as(request, db, orcid, "")
-    return {"logged_in": True, "name": user.name}
 
 
 @router.get("/auth/orcid/login")
@@ -126,12 +115,7 @@ def logout(request: Request):
 
 
 def _auth_info() -> dict:
-    return {
-        "auth_mode": config.AUTH_MODE,
-        "mock_enabled": config.AUTH_MODE in ("mock", "both"),
-        "orcid_enabled": config.AUTH_MODE in ("orcid", "both"),
-        "orcid_ready": bool(config.ORCID_CLIENT_ID),
-    }
+    return {"orcid_ready": bool(config.ORCID_CLIENT_ID)}
 
 
 @router.get("/api/me")

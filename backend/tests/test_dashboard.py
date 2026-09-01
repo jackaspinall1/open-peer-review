@@ -10,7 +10,7 @@ from datetime import timedelta
 from app import rounds
 from app.db import SessionLocal
 from app.models import ReviewRound
-from conftest import comment, login, make_document
+from conftest import comment, login, logout, make_document
 
 AUTHOR = "0000-0002-1825-0097"
 COAUTHOR = "0000-0001-5109-3700"
@@ -75,7 +75,7 @@ def test_papers_you_are_not_on_do_not_appear(client):
 
 
 def test_dashboard_requires_login(client):
-    client.post("/auth/logout")
+    logout(client)
     assert client.get("/api/documents/mine").status_code == 401
 
 
@@ -156,5 +156,5 @@ def test_silent_viewers_do_not_consume_reviewer_numbers(client):
 def test_standing_requires_login(client):
     login(client, AUTHOR)
     doc = make_document(client)
-    client.post("/auth/logout")
+    logout(client)
     assert client.get(f"/api/documents/{doc}/my-relationship").status_code == 401

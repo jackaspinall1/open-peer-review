@@ -13,7 +13,9 @@ os.environ["ADMIN_ORCIDS"] = "0000-0002-0000-0001"
 from fastapi.testclient import TestClient  # noqa: E402
 
 from app import coi, config, ratelimit  # noqa: E402
-from app.db import Base, engine, init_db  # noqa: E402
+from app.auth import get_current_user  # noqa: E402
+from app.db import Base, engine, init_db, SessionLocal  # noqa: E402
+from app.models import User  # noqa: E402
 from app.main import app  # noqa: E402
 
 PDF = b"%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n"
@@ -48,14 +50,47 @@ def client():
     # assertions about counts pass alone but fail in a full run.
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
-    with TestClient(app) as c:
-        yield c
+    _signed_in["orcid"] = None
+    app.dependency_overrides[get_current_user] = _override_current_user
+    try:
+        with TestClient(app) as c:
+            yield c
+    finally:
+        app.dependency_overrides.clear()
+
+
+# Tests authenticate by overriding the current-user dependency rather than
+# through a login endpoint. There is no fake-login path in the application: one
+# that accepted an ORCID iD without verifying it would let anyone post as any
+# researcher, so it must not exist even behind a flag.
+_signed_in: dict[str, str | None] = {"orcid": None}
+
+
+def _override_current_user():
+    if _signed_in["orcid"] is None:
+        return None
+    db = SessionLocal()
+    try:
+        return db.query(User).filter(User.orcid == _signed_in["orcid"]).one_or_none()
+    finally:
+        db.close()
 
 
 def login(client, orcid):
-    r = client.post("/auth/mock/login", json={"orcid": orcid})
-    assert r.status_code == 200, r.text
-    return r
+    """Sign in as this ORCID, creating the account if it is new."""
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.orcid == orcid).one_or_none()
+        if user is None:
+            db.add(User(orcid=orcid, name=orcid))
+            db.commit()
+    finally:
+        db.close()
+    _signed_in["orcid"] = orcid
+
+
+def logout(client):
+    _signed_in["orcid"] = None
 
 
 def make_document(client, title="Test paper", authors=None, doi=None, uploader_orcid=None):

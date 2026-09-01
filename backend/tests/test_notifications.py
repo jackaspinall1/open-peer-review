@@ -4,7 +4,7 @@ In-app only: the ORCID /authenticate scope returns an iD and a name and no email
 address, so there is nowhere to send a message. This reaches people when they
 next visit, which is a real limitation rather than an oversight.
 """
-from conftest import comment, login, make_document
+from conftest import comment, login, logout, make_document
 
 AUTHOR = "0000-0002-1825-0097"
 REVIEWER = "0000-0001-5109-3700"
@@ -84,6 +84,6 @@ def test_notifications_never_expose_who_replied(client):
 
 
 def test_notifications_require_login(client):
-    client.post("/auth/logout")
+    logout(client)
     assert client.get("/api/notifications").status_code == 401
     assert client.post("/api/notifications/read").status_code == 401

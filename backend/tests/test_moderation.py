@@ -3,7 +3,7 @@
 Comments publish immediately; reports queue for a human and hide nothing; a
 delete removes the text but preserves the thread so replies stay readable.
 """
-from conftest import comment, login, make_document
+from conftest import comment, login, logout, make_document
 
 AUTHOR = "0000-0002-1825-0097"
 OTHER = "0000-0001-5109-3700"
@@ -80,6 +80,6 @@ def test_login_required_to_moderate_or_report(client):
     login(client, AUTHOR)
     doc = make_document(client)
     cid = comment(client, doc, "text")["id"]
-    client.post("/auth/logout")
+    logout(client)
     assert client.delete(f"/api/comments/{cid}").status_code == 401
     assert client.post(f"/api/comments/{cid}/report", json={}).status_code == 401

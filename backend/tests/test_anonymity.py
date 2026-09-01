@@ -7,7 +7,7 @@ disclosure").
 """
 import json
 
-from conftest import comment, login, make_document
+from conftest import comment, login, logout, make_document
 
 REAL_NAME = "Ada Lovelace"
 ORCID_A = "0000-0002-1825-0097"
@@ -24,7 +24,7 @@ def test_public_payload_never_contains_identity(client):
     login(client, ORCID_B)
     comment(client, doc, "A second view")
 
-    client.post("/auth/logout")
+    logout(client)
     payload = client.get(f"/api/documents/{doc}").json()
     blob = json.dumps(payload["comments"])
 
@@ -38,7 +38,7 @@ def test_badges_disclose_no_quantities(client):
     login(client, ORCID_A)
     doc = make_document(client)
     comment(client, doc, "hello")
-    client.post("/auth/logout")
+    logout(client)
     blob = json.dumps(client.get(f"/api/documents/{doc}").json()["comments"])
     for forbidden in ("20+", "10+", "5+", "shared works", "publishing 10", "University of"):
         assert forbidden not in blob, f"{forbidden!r} is a fingerprinting disclosure"
@@ -54,7 +54,7 @@ def test_aliases_are_per_document(client):
     login(client, ORCID_A)
     comment(client, d1, "second")         # Reviewer 2 on d1
     comment(client, d2, "third")          # Reviewer 1 on d2
-    client.post("/auth/logout")
+    logout(client)
     a1 = client.get(f"/api/documents/{d1}").json()["comments"]
     a2 = client.get(f"/api/documents/{d2}").json()["comments"]
     assert [c["alias"] for c in a1] == ["Reviewer 1", "Reviewer 2"]
