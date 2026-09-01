@@ -10,6 +10,7 @@ import CoiBadge, { ExpertiseBadge } from './CoiBadge'
  */
 export default function YourStanding({ standing }) {
   if (!standing) return null
+  const isAuthor = standing.coi.status === 'author'
   const checking = standing.coi.status === 'pending' || standing.expertise.level === 'pending'
 
   return (
@@ -20,13 +21,17 @@ export default function YourStanding({ standing }) {
       <span className={standing.coi.status === 'author' ? 'alias author' : 'alias'}>
         {standing.alias}
       </span>
-      {checking ? (
+      {checking && !isAuthor ? (
         <span className="muted">checking your relationship to this paper…</span>
       ) : (
-        <>
-          {standing.coi.status !== 'author' && <CoiBadge coi={standing.coi} />}
-          <ExpertiseBadge expertise={standing.expertise} />
-        </>
+        // An author needs neither badge: being on the paper already says both
+        // that they are conflicted and that they work on the topic.
+        !isAuthor && (
+          <>
+            <CoiBadge coi={standing.coi} />
+            <ExpertiseBadge expertise={standing.expertise} />
+          </>
+        )
       )}
     </div>
   )

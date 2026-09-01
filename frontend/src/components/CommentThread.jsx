@@ -22,8 +22,13 @@ function CommentCard({ comment, onVote, canVote, onDelete, onReport, children })
         >
           {comment.alias}
         </span>
-        {comment.coi?.status !== 'author' && <CoiBadge coi={comment.coi} />}
-        {comment.coi?.status !== 'author' && <ExpertiseBadge expertise={comment.expertise} />}
+        {/* An author needs neither badge: being on the paper says both. */}
+        {comment.coi?.status !== 'author' && (
+          <>
+            <CoiBadge coi={comment.coi} />
+            <ExpertiseBadge expertise={comment.expertise} />
+          </>
+        )}
         <span className="muted time">{timeAgo(comment.created_at)}</span>
         {comment.after_window && (
           <span className="latemark" title="Posted after the review window closed; not counted in the round record">
