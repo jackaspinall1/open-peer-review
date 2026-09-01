@@ -218,7 +218,10 @@ the scenario that produces letters.
       the closed-round bar and the author page
 - [ ] Deposit that record to Zenodo automatically and store the DOI in
       documents.review_doi. Deliberately manual for the first rounds: doing it
-      by hand will show what the artifact should actually contain
+      by hand will show what the artifact should actually contain.
+      NOTE: the homepage now states "the review is deposited on Zenodo" as step
+      five, so this is a promise on the front page and needs building before any
+      public launch
 
 - [x] Zoom inside the PDF column only (re-render, not CSS transform, so figures
       stay sharp); fixed a latent bug where text-layer spans never scaled,

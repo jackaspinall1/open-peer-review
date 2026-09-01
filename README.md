@@ -156,7 +156,8 @@ privacy obligations that brings.
 
 ## No directory
 
-The homepage explains how the system works; it does not list papers. Nobody
+The homepage states the mission and the five steps of a round; it does not list
+papers. Nobody
 browses a repository looking for something to review, and a directory would
 imply a model that does not work. Each paper has its own URL and travels by an
 author asking specific people to look, which is the only invitation that
