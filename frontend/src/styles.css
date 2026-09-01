@@ -145,6 +145,7 @@ h2 { font-size: 16px; margin: 0; }
   display: flex; justify-content: space-between; align-items: center; gap: 16px;
 }
 .revisionbtn { cursor: pointer; white-space: nowrap; }
+.openreview { white-space: nowrap; padding: 8px 18px; font-weight: 600; }
 .viewerhead h1 { font-size: 17px; margin: 0; }
 .viewerbody { display: flex; flex: 1; min-height: 0; }
 .pdfcolumn {
@@ -333,3 +334,28 @@ h2 { font-size: 16px; margin: 0; }
 .prose p, .prose li { font-size: 14px; }
 .prose ul { padding-left: 20px; }
 .prose li { margin-bottom: 6px; }
+
+/* ---------- share dialog ---------- */
+.modalveil {
+  position: fixed; inset: 0; z-index: 100; display: flex;
+  align-items: center; justify-content: center; padding: 20px;
+  background: rgba(30, 33, 38, 0.45);
+}
+.modal {
+  background: var(--card); border-radius: 10px; padding: 22px;
+  max-width: 460px; width: 100%; box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+}
+.modal h2 { font-size: 17px; margin-bottom: 8px; }
+.modal p { font-size: 13.5px; margin-bottom: 16px; }
+.sharelink { display: flex; gap: 8px; margin-bottom: 14px; }
+.sharelink input {
+  flex: 1; min-width: 0; font: inherit; font-size: 13px; padding: 7px 10px;
+  border: 1px solid var(--line); border-radius: 6px; background: var(--paper);
+}
+.sharerow { display: flex; gap: 8px; margin-bottom: 16px; }
+.sharebtn {
+  flex: 1; text-align: center; text-decoration: none; font-size: 13.5px;
+  padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px;
+  color: var(--ink); background: var(--paper);
+}
+.sharebtn:hover { border-color: var(--accent); color: var(--accent); }

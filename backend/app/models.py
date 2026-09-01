@@ -46,6 +46,7 @@ class Document(Base):
     # shown publicly because a view count measures promotion, not scrutiny.
     views: Mapped[int] = mapped_column(Integer, default=0)
     pdf_sha256: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    source_checked_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     uploaded_by: Mapped[Optional[int]] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )

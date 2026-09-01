@@ -1,0 +1,31 @@
+import { chromium } from 'playwright'
+import { readFileSync } from 'fs'
+const browser = await chromium.launch()
+const ctx = await browser.newContext({ viewport: { width: 1440, height: 800 } })
+await ctx.addCookies([{ name: 'session', value: readFileSync('/tmp/session_cookie.txt','utf8').trim(), domain: 'localhost', path: '/' }])
+const page = await ctx.newPage()
+page.on('pageerror', (e) => console.log('PAGEERROR:', e.message))
+await page.goto('http://localhost:5173/doc/2')
+await page.waitForSelector('.pdfpage canvas', { timeout: 30000 })
+console.log('  staged paper says :', await page.locator('.roundstatus').innerText())
+const b = await page.locator('.openreview').boundingBox()
+console.log('  open button       :', await page.locator('.openreview').innerText(), `(${Math.round(b.width)}x${Math.round(b.height)})`)
+console.log('  other actions     :', (await page.locator('.viewerhead button, .viewerhead label').allInnerTexts()).map(t=>t.trim()))
+await page.screenshot({ path: process.env.SP + '/staged.png' })
+await page.click('.openreview')
+await page.waitForFunction(() => document.querySelector('.roundstatus')?.textContent.includes('days left'), null, { timeout: 15000 })
+console.log('  after opening     :', await page.locator('.roundstatus').innerText())
+console.log('  actions now       :', (await page.locator('.viewerhead button').allInnerTexts()).map(t=>t.trim()))
+// selection still works after the edit
+await page.waitForFunction(() => document.querySelectorAll('.pdfpage[data-page="1"] .textLayer span').length > 50, null, { timeout: 20000 })
+const q = await page.evaluate(() => {
+  const layer = document.querySelector('.pdfpage[data-page="1"] .textLayer')
+  const span = [...layer.querySelectorAll('span[data-idx]')].filter((s) => (s.firstChild?.textContent ?? '').trim().length > 30)[2]
+  const r = document.createRange(); r.setStart(span.firstChild, 0); r.setEnd(span.firstChild, 25)
+  const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r)
+  document.querySelector('.pdfcolumn').dispatchEvent(new MouseEvent('mouseup', { bubbles: true }))
+  return r.toString()
+})
+await page.waitForSelector('.selpopover', { timeout: 8000 })
+console.log('  selection works   :', JSON.stringify(q.slice(0, 30)))
+await browser.close()

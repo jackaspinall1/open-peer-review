@@ -39,9 +39,8 @@ re-attaches; revised text surfaces as unresolved).
       Square, OSF, SSRN…); publisher copies are excluded — they 403 automated
       fetches anyway
 - [x] Version tracking: stored PDF hash vs the preprint server's current file
-- [ ] Poll for new versions automatically rather than on demand (arXiv serves
-      the latest at a stable URL, so this is a cron over documents with a
-      source URL)
+- [x] Fetch new versions automatically instead of behind a button: checked in
+      the background on a page view, throttled to six hours
 - [ ] Push the review record back the other way: DOI/link to the review page in
       the preprint's comments field where the server supports it
 

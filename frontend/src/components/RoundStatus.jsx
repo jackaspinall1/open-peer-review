@@ -13,7 +13,10 @@ function fmt(iso) {
 }
 
 export default function RoundStatus({ round, documentId }) {
-  if (!round) return null
+  // A paper that has been added but never opened is a real state, and a reader
+  // arriving on it should be told rather than left wondering why there is
+  // nowhere to comment.
+  if (!round) return <span className="roundstatus closed">Not yet open for review</span>
 
   const opened = new Date(round.opened_at).getTime()
   const closes = new Date(round.closes_at).getTime()

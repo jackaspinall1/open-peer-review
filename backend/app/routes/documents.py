@@ -1,13 +1,14 @@
 import json
 import uuid
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from fastapi.responses import FileResponse, Response
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 import hashlib
 import json as _json
+from datetime import datetime, timedelta, timezone
 
 from pydantic import BaseModel
 
@@ -21,6 +22,19 @@ from ..serialize import document_summary, full_document
 router = APIRouter(prefix="/api/documents")
 
 MAX_PDF_BYTES = 50 * 1024 * 1024
+
+
+SOURCE_CHECK_EVERY = timedelta(hours=6)
+
+
+def _due_for_source_check(doc: Document) -> bool:
+    """Each check downloads the PDF, so not on every page view."""
+    if doc.source_checked_at is None:
+        return True
+    checked = doc.source_checked_at
+    if checked.tzinfo is None:
+        checked = checked.replace(tzinfo=timezone.utc)
+    return datetime.now(timezone.utc) - checked > SOURCE_CHECK_EVERY
 
 
 def can_manage(user: User, doc: Document) -> bool:
@@ -158,62 +172,42 @@ def list_documents(db: Session = Depends(get_db)):
     return [document_summary(d, counts.get(d.id, 0)) for d in docs]
 
 
-@router.post("/{doc_id}/revision")
-async def upload_revision(
-    doc_id: int,
-    pdf: UploadFile = File(...),
-    user: User = Depends(require_user),
-    db: Session = Depends(get_db),
-):
-    doc = db.get(Document, doc_id)
-    if doc is None:
-        raise HTTPException(status_code=404, detail="Document not found")
-    if not can_manage(user, doc):
-        raise HTTPException(status_code=403, detail="Only an author of this paper can post a revision")
-    content = await pdf.read()
-    if len(content) > MAX_PDF_BYTES:
-        raise HTTPException(status_code=413, detail="PDF too large (50 MB limit)")
-    if not content.startswith(b"%PDF-"):
-        raise HTTPException(status_code=422, detail="File is not a PDF")
-    filename = f"{uuid.uuid4().hex}.pdf"
-    (config.PDF_DIR / filename).write_bytes(content)
-    # previous file is left on disk (future: version history route)
-    doc.pdf_filename = filename
-    doc.pdf_sha256 = hashlib.sha256(content).hexdigest()
-    doc.version += 1
-    db.commit()
-    return {"id": doc.id, "version": doc.version}
 
 
-@router.post("/{doc_id}/check-source")
-def check_source(doc_id: int, user: User = Depends(require_user), db: Session = Depends(get_db)):
-    """Re-fetch the preprint from its server; bump the version if it changed.
+def refresh_from_source(document_id: int) -> None:
+    """Re-fetch a paper from its preprint server and bump the version if it moved.
 
-    Preprint servers serve the latest version at a stable URL, so this is how a
-    revision posted to arXiv/bioRxiv propagates into the review record.
+    Runs in the background rather than behind a button: a revision belongs on the
+    preprint server, and an author should not have to come here and press
+    something for it to arrive. Throttled, since each check downloads the PDF.
     """
-    doc = db.get(Document, doc_id)
-    if doc is None:
-        raise HTTPException(status_code=404, detail="Document not found")
-    if not can_manage(user, doc):
-        raise HTTPException(status_code=403, detail="Only an author of this paper can refresh it")
-    if not doc.source_pdf_url:
-        raise HTTPException(status_code=422, detail="This paper was uploaded manually, not imported")
-    try:
-        content = metadata.download_pdf(doc.source_pdf_url, MAX_PDF_BYTES)
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Could not fetch from the preprint server: {exc}")
+    import hashlib
 
-    digest = hashlib.sha256(content).hexdigest()
-    if digest == doc.pdf_sha256:
-        return {"id": doc.id, "version": doc.version, "updated": False}
-    filename = f"{uuid.uuid4().hex}.pdf"
-    (config.PDF_DIR / filename).write_bytes(content)
-    doc.pdf_filename = filename
-    doc.pdf_sha256 = digest
-    doc.version += 1
-    db.commit()
-    return {"id": doc.id, "version": doc.version, "updated": True}
+    from ..db import SessionLocal
+    from ..models import utcnow
+
+    db = SessionLocal()
+    try:
+        doc = db.get(Document, document_id)
+        if doc is None or not doc.source_pdf_url:
+            return
+        try:
+            content = metadata.download_pdf(doc.source_pdf_url, MAX_PDF_BYTES)
+        except Exception:
+            doc.source_checked_at = utcnow()   # do not hammer a failing source
+            db.commit()
+            return
+        digest = hashlib.sha256(content).hexdigest()
+        doc.source_checked_at = utcnow()
+        if digest != doc.pdf_sha256:
+            filename = f"{uuid.uuid4().hex}.pdf"
+            (config.PDF_DIR / filename).write_bytes(content)
+            doc.pdf_filename = filename
+            doc.pdf_sha256 = digest
+            doc.version += 1
+        db.commit()
+    finally:
+        db.close()
 
 
 @router.post("/{doc_id}/rounds")
@@ -263,6 +257,8 @@ def get_document(
         db.commit()
     # Retrying failed badge checks must not block the read either.
     background.add_task(coi.refresh_pending_detached, doc.id)
+    if doc.source_pdf_url and _due_for_source_check(doc):
+        background.add_task(refresh_from_source, doc.id)
     return full_document(db, doc, user)
 
 

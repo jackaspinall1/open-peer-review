@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useMe } from '../auth'
-import { del, get, postForm, postJSON } from '../api'
+import { del, get, postJSON } from '../api'
 import PdfViewer from '../pdf/PdfViewer'
 import SelectionPopover from '../pdf/SelectionPopover'
 import CommentSidebar from '../components/CommentSidebar'
 import RoundStatus from '../components/RoundStatus'
+import ShareDialog from '../components/ShareDialog'
 
 /** Human-readable licence, e.g. "cc-by-nc-nd" -> "CC BY-NC-ND". */
 function licenceLabel(code) {
@@ -30,45 +31,19 @@ export default function ViewerPage() {
   }, [id])
 
   const [roundBusy, setRoundBusy] = useState(false)
+  const [sharing, setSharing] = useState(false)
 
   const roundAction = async (path, okMsg) => {
     setRoundBusy(true)
     try {
       await postJSON(`/api/documents/${id}/${path}`, {})
       setDoc(await get(`/api/documents/${id}`))
-      setToast(okMsg)
+      if (okMsg) setToast(okMsg)
     } catch (e) {
       setToast(e.message)
+      throw e
     } finally {
       setRoundBusy(false)
-    }
-  }
-
-  const checkSource = async () => {
-    setToast('Checking the preprint server…')
-    try {
-      const r = await postJSON(`/api/documents/${id}/check-source`, {})
-      setDoc(await get(`/api/documents/${id}`))
-      setToast(
-        r.updated
-          ? `New version found — now showing v${r.version}. Comments are re-anchoring.`
-          : 'Already showing the latest version on the preprint server.',
-      )
-    } catch (e) {
-      setToast(e.message)
-    }
-  }
-
-  const uploadRevision = async (file) => {
-    if (!file) return
-    try {
-      await postForm(`/api/documents/${id}/revision`, (() => { const fd = new FormData(); fd.append('pdf', file); return fd })())
-      setActiveId(null)
-      setDraft(null)
-      setDoc(await get(`/api/documents/${id}`))
-      setToast('Revision uploaded — comments are re-anchoring against the new version.')
-    } catch (e) {
-      setToast(e.message)
     }
   }
 
@@ -191,10 +166,13 @@ export default function ViewerPage() {
           </div>
         </div>
         {doc.can_manage && !doc.round?.open && (
-          <button className="linkbtn revisionbtn" disabled={roundBusy}
-            onClick={() => roundAction('rounds', 'Review window open for 14 days. Now go and ask people.')}>
-            {doc.round ? 'Open a new round' : 'Open review'}
+          <button className="primary openreview" disabled={roundBusy}
+            onClick={() => roundAction('rounds').then(() => setSharing(true))}>
+            {doc.round ? 'Open a new review round' : 'Open Review'}
           </button>
+        )}
+        {doc.can_manage && doc.round?.open && (
+          <button className="linkbtn revisionbtn" onClick={() => setSharing(true)}>Share</button>
         )}
         {doc.can_manage && doc.round?.open && doc.round.extendable && (
           <button className="linkbtn revisionbtn" disabled={roundBusy}
@@ -211,22 +189,6 @@ export default function ViewerPage() {
             }}>
             Extend by a week
           </button>
-        )}
-        {doc.can_manage && doc.has_source && (
-          <button className="linkbtn revisionbtn" onClick={checkSource}>
-            Check for new version
-          </button>
-        )}
-        {doc.can_manage && (
-          <label className="linkbtn revisionbtn">
-            Upload revision
-            <input
-              type="file"
-              accept="application/pdf"
-              style={{ display: 'none' }}
-              onChange={(e) => { uploadRevision(e.target.files[0]); e.target.value = '' }}
-            />
-          </label>
         )}
       </div>
       <div className="viewerbody">
@@ -258,6 +220,14 @@ export default function ViewerPage() {
         />
       </div>
       <SelectionPopover popover={popover} onComment={startDraft} />
+      {sharing && (
+        <ShareDialog
+          url={`${window.location.origin}/doc/${doc.id}`}
+          title={doc.title}
+          days={doc.round?.days_left ?? 14}
+          onClose={() => setSharing(false)}
+        />
+      )}
       {toast && <div className="toast">{toast}</div>}
     </div>
   )

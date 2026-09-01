@@ -108,6 +108,13 @@ the whole system.
 
 - **Two weeks**, and there is no deadline on the author afterwards: revising is
   their own work, and "revise within 30 days" is a journal pathology this avoids.
+- Opening a round is a deliberate act by an author, and it leads straight into
+  a share prompt: the copyable link first, then X and LinkedIn. Reviews happen
+  because someone was asked, and a message to three colleagues who know the work
+  beats any post, so the dialog says so.
+- Revisions are **not uploaded here**. A new version belongs on the preprint
+  server; the paper is re-fetched in the background, at most every six hours,
+  and the version bumps by itself when the file changes.
 - Extending is possible **only in the last three days** of a window, a week at a
   time, up to a month in total. A deadline you can postpone on day one is not a
   deadline, and whether you actually need longer cannot be answered honestly
