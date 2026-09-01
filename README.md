@@ -109,9 +109,10 @@ the whole system.
 - **Two weeks**, and there is no deadline on the author afterwards: revising is
   their own work, and "revise within 30 days" is a journal pathology this avoids.
 - Opening a round is a deliberate act by an author, and it leads straight into a
-  share prompt offering the paper's link and nothing else. Reviews happen because
-  someone was asked, and a message to three colleagues who know the work beats
-  any post, so what the author needs is a URL on the clipboard.
+  share prompt offering the paper's link and nothing else, since what the author
+  needs is a URL on the clipboard. The copy points them at second-order contacts:
+  people in the same community rather than immediate collaborators, because a
+  co-author's comment carries a conflict badge and is discounted accordingly.
 - Revisions are **not uploaded here**. A new version belongs on the preprint
   server; the paper is re-fetched in the background, at most every six hours,
   and the version bumps by itself when the file changes.
