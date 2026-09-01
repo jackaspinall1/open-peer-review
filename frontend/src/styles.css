@@ -325,6 +325,7 @@ h2 { font-size: 16px; margin: 0; }
 .mission { font-size: 30px; line-height: 1.2; margin-bottom: 22px; }
 .steps { padding-left: 22px; }
 .steps li { font-size: 15px; margin-bottom: 12px; }
+.pending-feature { color: var(--muted); font-size: 13.5px; }
 .prose ol { padding-left: 20px; }
 .prose ol li { margin-bottom: 10px; }
 .prose .primary { display: inline-block; margin-top: 8px; }

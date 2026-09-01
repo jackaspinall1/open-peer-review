@@ -24,7 +24,10 @@ export default function IndexPage() {
           reviews are pseudonymous.
         </li>
         <li>Review concludes after 14 days, with the option for authors to extend.</li>
-        <li>The review is deposited on Zenodo.</li>
+        <li>
+          The review is deposited on Zenodo.{' '}
+          <span className="pending-feature">[This feature is currently disabled during development.]</span>
+        </li>
       </ol>
 
       {me?.logged_in ? (
