@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useMe } from '../auth'
 import CommentThread from './CommentThread'
+import CommentsGuide from './CommentsGuide'
 import YourStanding from './YourStanding'
 
 function DraftCard({ draft, onPost, onCancel }) {
@@ -72,11 +73,7 @@ export default function CommentSidebar({ comments, docVersion, round, canManage,
       </div>
       <YourStanding standing={standing} />
       {draft && <DraftCard draft={draft} onPost={onPost} onCancel={onCancelDraft} />}
-      {comments.length === 0 && !draft && (
-        <p className="muted sidebarhint">
-          Select a sentence in the paper to leave the first comment.
-        </p>
-      )}
+      {comments.length === 0 && !draft && <CommentsGuide />}
       {canManage && round?.open && round.days_left <= 3 && round.reviewer_count < 2 && (
         <p className="nudge">
           Your review window closes in {round.days_left} day{round.days_left === 1 ? '' : 's'} and

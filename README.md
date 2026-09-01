@@ -251,6 +251,15 @@ who reads what, tied to a verified ORCID iD, would be more revealing than a
 record of what someone chose to say, and would deter exactly the cautious
 reviewer this depends on.
 
+## The empty sidebar teaches
+
+Before a paper has comments, the sidebar explains commenting rather than sitting
+empty: how to anchor a comment, what the badges mean, that reviewers are
+pseudonymous per paper, and the one conduct rule. The badges are the real
+components rendered with example values, because showing them is clearer than
+describing them and cannot drift out of date. It disappears as soon as there is
+a comment to read instead.
+
 ## Moderation
 
 Deliberately minimal and reversible, because gates are what make review systems

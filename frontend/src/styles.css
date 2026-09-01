@@ -234,6 +234,13 @@ h2 { font-size: 16px; margin: 0; }
 }
 .sidebarhead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
 .sidebarhint { font-size: 13.5px; }
+.guide { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.guide h3 {
+  font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--ink); margin: 18px 0 6px;
+}
+.guide p { margin: 0 0 8px; }
+.guidebadges { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
 .standing {
   display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
   font-size: 12px; padding: 8px 10px; margin-bottom: 12px;
